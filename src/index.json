@@ -73579,6 +73579,101 @@
                     "version": "2.37.0"
                 },
                 "sha256Digest": "2137b0b35beff7916ced5c13c84561217f7013f3faa36dcbb447bc0006c41bd9"
+            },
+            {
+                "downloadUrl": "https://azuremlsdktestpypi.blob.core.windows.net/wheels/sdk-cli-v2-public/ml-2.37.1-py3-none-any.whl",
+                "filename": "ml-2.37.1-py3-none-any.whl",
+                "metadata": {
+                    "azext.minCliCoreVersion": "2.15.0",
+                    "classifiers": [
+                        "Development Status :: 5 - Production/Stable",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Environment :: Console",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "Programming Language :: Python :: 3.9",
+                        "Programming Language :: Python :: 3.10",
+                        "Programming Language :: Python :: 3.11",
+                        "Programming Language :: Python :: 3.12",
+                        "Programming Language :: Python :: 3.13",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "description_content_type": "text/x-rst",
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azuremlsdk@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://docs.microsoft.com/azure/machine-learning/azure-machine-learning-release-notes-cli-v2?view=azureml-api-2"
+                            }
+                        }
+                    },
+                    "extras": [],
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "ml",
+                    "run_requires": [
+                        {
+                            "requires": [
+                                "azure-common (>=1.1)",
+                                "azure-common>=1.1",
+                                "azure-identity (==1.17.1)",
+                                "azure-identity==1.17.1",
+                                "azure-mgmt-resource (<23.0.0,>=3.0.0)",
+                                "azure-mgmt-resource<23.0.0,>=3.0.0",
+                                "azure-mgmt-resourcegraph (<9.0.0,>=2.0.0)",
+                                "azure-mgmt-resourcegraph<9.0.0,>=2.0.0",
+                                "azure-monitor-opentelemetry",
+                                "azure-monitor-opentelemetry",
+                                "azure-storage-blob (>=12.10.0)",
+                                "azure-storage-blob>=12.10.0",
+                                "azure-storage-file-datalake (>=12.2.0)",
+                                "azure-storage-file-datalake>=12.2.0",
+                                "azure-storage-file-share",
+                                "azure-storage-file-share",
+                                "colorama (<1.0.0)",
+                                "colorama<1.0.0",
+                                "cryptography",
+                                "cryptography",
+                                "docker",
+                                "docker",
+                                "isodate (<1.0.0)",
+                                "isodate<1.0.0",
+                                "jsonschema (<5.0.0,>=4.0.0)",
+                                "jsonschema<5.0.0,>=4.0.0",
+                                "marshmallow (<4.0.0,>=3.5)",
+                                "marshmallow<4.0.0,>=3.5",
+                                "pydash (<9.0.0,>=6.0.0)",
+                                "pydash<9.0.0,>=6.0.0",
+                                "pyjwt (<3.0.0)",
+                                "pyjwt<3.0.0",
+                                "six (>=1.11.0)",
+                                "six>=1.11.0",
+                                "strictyaml (<2.0.0)",
+                                "strictyaml<2.0.0",
+                                "tqdm (<5.0.0)",
+                                "tqdm<5.0.0",
+                                "typing-extensions (<5.0.0)",
+                                "typing-extensions<5.0.0"
+                            ]
+                        }
+                    ],
+                    "summary": "Microsoft Azure Command-Line Tools AzureMachineLearningWorkspaces Extension",
+                    "version": "2.37.1"
+                },
+                "sha256Digest": "24d3fd4fc8b1cdd25f0ff4a68aaea1d345cc2d9f5c79f8cb17a19d2b7cdf832f"
             }
         ],
         "mobile-network": [
