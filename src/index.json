@@ -103093,51 +103093,6 @@
                 "sha256Digest": "d4a1df1b81531516cbb8460303e30ab7e465ff10da9bb91f5c90e5c223610643"
             }
         ],
-        "weights-and-biases": [
-            {
-                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/weights_and_biases-1.0.0b1-py3-none-any.whl",
-                "filename": "weights_and_biases-1.0.0b1-py3-none-any.whl",
-                "metadata": {
-                    "azext.isPreview": true,
-                    "azext.minCliCoreVersion": "2.70.0",
-                    "classifiers": [
-                        "Development Status :: 4 - Beta",
-                        "Intended Audience :: Developers",
-                        "Intended Audience :: System Administrators",
-                        "Programming Language :: Python",
-                        "Programming Language :: Python :: 3",
-                        "Programming Language :: Python :: 3.7",
-                        "Programming Language :: Python :: 3.8",
-                        "Programming Language :: Python :: 3.9",
-                        "License :: OSI Approved :: MIT License"
-                    ],
-                    "extensions": {
-                        "python.details": {
-                            "contacts": [
-                                {
-                                    "email": "azpycli@microsoft.com",
-                                    "name": "Microsoft Corporation",
-                                    "role": "author"
-                                }
-                            ],
-                            "document_names": {
-                                "description": "DESCRIPTION.rst"
-                            },
-                            "project_urls": {
-                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/weights-and-biases"
-                            }
-                        }
-                    },
-                    "generator": "bdist_wheel (0.30.0)",
-                    "license": "MIT",
-                    "metadata_version": "2.0",
-                    "name": "weights-and-biases",
-                    "summary": "Microsoft Azure Command-Line Tools WeightsAndBiases Extension.",
-                    "version": "1.0.0b1"
-                },
-                "sha256Digest": "a7deb5fbc606ffb2ecc92f1bfb17c43eada165e8b0970a81be7c979e4c68cf7a"
-            }
-        ],
         "workloads": [
             {
                 "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/workloads-0.1.0a1-py3-none-any.whl",
