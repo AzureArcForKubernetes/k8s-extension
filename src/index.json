@@ -103437,6 +103437,49 @@
                     "version": "1.0.0b2"
                 },
                 "sha256Digest": "783082e58622e8c49560764b910917ef45171632e5d177a063efde51b43e542d"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/zones-1.0.0b3-py3-none-any.whl",
+                "filename": "zones-1.0.0b3-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.0.67",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "nielsb@microsoft.com",
+                                    "name": "Niels Buit",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/master/src/zones"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "zones",
+                    "summary": "Microsoft Azure Command-Line Tools Zones Extension",
+                    "version": "1.0.0b3"
+                },
+                "sha256Digest": "3bd81c28abd60c59a59d969b222a0318d231aa7f170da138c5e3addffabeed19"
             }
         ]
     },
