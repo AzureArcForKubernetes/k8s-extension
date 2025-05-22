@@ -40863,6 +40863,49 @@
                     "version": "1.1.1b1"
                 },
                 "sha256Digest": "2055fc2811b842b80421db0fce1947435feafb4b05810065314785fb0813cc60"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/connectedmachine-2.0.0b1-py3-none-any.whl",
+                "filename": "connectedmachine-2.0.0b1-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.57.0",
+                    "classifiers": [
+                        "Development Status :: 5 - Production/Stable",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/connectedmachine"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "connectedmachine",
+                    "summary": "Microsoft Azure Command-Line Tools ConnectedMachine Extension",
+                    "version": "2.0.0b1"
+                },
+                "sha256Digest": "4cd7b0c29b38acd4b1fcef8622174532c2c90bc674a710f6548946b2e8ce3d5b"
             }
         ],
         "connectedvmware": [
