@@ -102004,6 +102004,51 @@
                 "sha256Digest": "0ceb87ec11b85ab84fed2407dc6227161ec31d3d2a377261486efa11798d9f6e"
             }
         ],
+        "vme": [
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/vme-1.0.0b1-py3-none-any.whl",
+                "filename": "vme-1.0.0b1-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.70.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "graytownsquad@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/vme"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "vme",
+                    "summary": "Microsoft Azure Command-Line Tools Vme Extension",
+                    "version": "1.0.0b1"
+                },
+                "sha256Digest": "70201987ccadc73e6c12dc8db95fc4a99f4aa8e89f057af55bc3c125672dcfff"
+            }
+        ],
         "vmware": [
             {
                 "downloadUrl": "https://github.com/virtustream/az-vmware-cli/releases/download/0.7.2/vmware-0.7.2-py2.py3-none-any.whl",
