@@ -17,6 +17,7 @@ Describe 'Azure Monitor Metrics Testing' {
             $workspaceLine = $createOutput -match "Using Azure Monitor Workspace.*: (\/subscriptions\/[^`n`r]+)"
             $workspaceResourceId = $workspaceLine -split ': ', 2 | Select-Object -Last 1
             $workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
+            Write-Host "print in create: $workspaceResourceGroup"
 
             $output = az $Env:K8sExtensionName show -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters -n $extensionName
             $? | Should -BeTrue
