@@ -15,7 +15,9 @@ Describe 'Azure Monitor Metrics Testing' {
             $? | Should -BeTrue
 
             $workspaceLine = $createOutput -match "Using Azure Monitor Workspace.*: (\/subscriptions\/[^`n`r]+)"
+            Write-Host "workspaceLine : $workspaceLine"
             $workspaceResourceId = $workspaceLine -split ': ', 2 | Select-Object -Last 1
+            Write-Host "workspaceResourceId : $workspaceResourceId"
             $workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
             Write-Host "print in create: $workspaceResourceGroup"
 
