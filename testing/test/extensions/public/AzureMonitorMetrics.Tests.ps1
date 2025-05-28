@@ -17,6 +17,7 @@ Describe 'Azure Monitor Metrics Testing' {
             # Extract workspace resource group from output line (robust regex-based extraction)
             if ($createOutput -match "resourceGroups/([^/]+)/providers/microsoft\.monitor/accounts") {
                 $script:workspaceResourceGroup = $matches[1]
+                Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
             }
 
             $output = az $Env:K8sExtensionName show -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters -n $extensionName
@@ -59,6 +60,7 @@ Describe 'Azure Monitor Metrics Testing' {
                 "NodeRecordingRulesRuleGroup-$clusterName"
             )
             
+            Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
             $ruleGroups = az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
             $ruleGroups | Should -Not -BeNullOrEmpty
 
