@@ -58,8 +58,8 @@ Describe 'Azure Monitor Metrics Testing' {
                 "KubernetesRecordingRulesRuleGroup-$clusterName",
                 "NodeRecordingRulesRuleGroup-$clusterName"
             )
-
-            $ruleGroups = az monitor metrics alert list --resource-group $script:workspaceResourceGroup | ConvertFrom-Json
+            
+            $ruleGroups = az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
             $ruleGroups | Should -Not -BeNullOrEmpty
 
             foreach ($expectedName in $expectedRuleGroupNames) {
