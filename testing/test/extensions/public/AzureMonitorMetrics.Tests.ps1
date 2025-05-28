@@ -14,11 +14,9 @@ Describe 'Azure Monitor Metrics Testing' {
             $createOutput = az $Env:K8sExtensionName create -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters --extension-type $extensionType -n $extensionName --no-wait
             $? | Should -BeTrue
 
-            # Extract workspace resource group from output line (robust regex-based extraction)
-            if ($createOutput -match "resourceGroups/([^/]+)/providers/microsoft\.monitor/accounts") {
-                $script:workspaceResourceGroup = $matches[1]
-                Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
-            }
+            $workspaceLine = $createOutput -match "Using Azure Monitor Workspace.*: (\/subscriptions\/[^`n`r]+)"
+            $workspaceResourceId = $workspaceLine -split ': ', 2 | Select-Object -Last 1
+            $workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
 
             $output = az $Env:K8sExtensionName show -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters -n $extensionName
             $? | Should -BeTrue
@@ -60,8 +58,8 @@ Describe 'Azure Monitor Metrics Testing' {
                 "NodeRecordingRulesRuleGroup-$clusterName"
             )
             
-            Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
-            $ruleGroups = az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
+            Write-Host "Workspace Resource Group: $workspaceResourceGroup"
+            $ruleGroups = az resource list --resource-group $workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
             $ruleGroups | Should -Not -BeNullOrEmpty
 
             foreach ($expectedName in $expectedRuleGroupNames) {
