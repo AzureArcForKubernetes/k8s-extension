@@ -11,8 +11,13 @@ Describe 'Azure Monitor Metrics Testing' {
         }
 
         It 'Creates the extension and checks that it onboards correctly' {
-            az $Env:K8sExtensionName create -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters --extension-type $extensionType -n $extensionName --no-wait
+            $createOutput = az $Env:K8sExtensionName create -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters --extension-type $extensionType -n $extensionName --no-wait
             $? | Should -BeTrue
+
+            # Extract workspace resource group from output line (robust regex-based extraction)
+            if ($createOutput -match "resourceGroups/([^/]+)/providers/microsoft\.monitor/accounts") {
+                $script:workspaceResourceGroup = $matches[1]
+            }
 
             $output = az $Env:K8sExtensionName show -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters -n $extensionName
             $? | Should -BeTrue
@@ -45,6 +50,22 @@ Describe 'Azure Monitor Metrics Testing' {
             $output | Should -Not -BeNullOrEmpty
             $extensionExists = $output | ConvertFrom-Json | Where-Object { $_.extensionType -eq $extensionType }
             $extensionExists | Should -Not -BeNullOrEmpty
+        }
+
+        It 'Verifies rule groups were created' {
+            $clusterName = $ENVCONFIG.arcClusterName
+            $expectedRuleGroupNames = @(
+                "KubernetesRecordingRulesRuleGroup-$clusterName",
+                "NodeRecordingRulesRuleGroup-$clusterName"
+            )
+
+            $ruleGroups = az monitor metrics alert list --resource-group $script:workspaceResourceGroup | ConvertFrom-Json
+            $ruleGroups | Should -Not -BeNullOrEmpty
+
+            foreach ($expectedName in $expectedRuleGroupNames) {
+                $matchingGroup = $ruleGroups | Where-Object { $_.name -eq $expectedName }
+                $matchingGroup | Should -Not -BeNullOrEmpty -Because "Rule group '$expectedName' should have been created by create.py"
+            }
         }
 
         It "Deletes the extension from the cluster" {
