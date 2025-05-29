@@ -22,7 +22,8 @@ Describe 'Azure Monitor Metrics Testing' {
             
                 $script:workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
                 Write-Host "print in create: $script:workspaceResourceGroup"
-            } else {
+            }
+            else {
                 Write-Host "Pattern not found in createOutput"
             }
 
@@ -66,18 +67,34 @@ Describe 'Azure Monitor Metrics Testing' {
                 "KubernetesRecordingRulesRuleGroup-$clusterName",
                 "NodeRecordingRulesRuleGroup-$clusterName"
             )
-            
-            Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
-            az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
-            $ruleGroups = az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
-            Write-Host "ruleGroups: $ruleGroups"
-            $ruleGroups | Should -Not -BeNullOrEmpty
 
+            Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
+
+            $n = 0
+            $ruleGroups = @()
+            do {
+                $ruleGroups = az resource list `
+                    --resource-group $script:workspaceResourceGroup `
+                    --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" `
+                    --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
+            
+                if ($ruleGroups) { break }
+                Start-Sleep -Seconds 10
+                $n += 1
+            } while ($n -lt 6)
+        
+            $ruleGroups | Should -Not -BeNullOrEmpty -Because "Rule groups may take time to be created after extension onboarding"
+            Write-Host "Retrieved rule groups: $($ruleGroups | ConvertTo-Json -Depth 5)"
+        
             foreach ($expectedName in $expectedRuleGroupNames) {
                 $matchingGroup = $ruleGroups | Where-Object { $_.name -eq $expectedName }
                 $matchingGroup | Should -Not -BeNullOrEmpty -Because "Rule group '$expectedName' should have been created by create.py"
             }
+        
+            Write-Host "`n--- All resources in workspace resource group ($script:workspaceResourceGroup) ---"
+            az resource list --resource-group $script:workspaceResourceGroup | ConvertFrom-Json | ConvertTo-Json -Depth 5
         }
+
 
         It "Deletes the extension from the cluster" {
             $output = az $Env:K8sExtensionName delete -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters -n $extensionName --force
