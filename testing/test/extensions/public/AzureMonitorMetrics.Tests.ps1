@@ -14,12 +14,17 @@ Describe 'Azure Monitor Metrics Testing' {
             $createOutput = az $Env:K8sExtensionName create -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters --extension-type $extensionType -n $extensionName --no-wait
             $? | Should -BeTrue
 
-            $workspaceLine = $createOutput -match "Using Azure Monitor Workspace.*: (\/subscriptions\/[^`n`r]+)"
-            Write-Host "workspaceLine : $workspaceLine"
-            $workspaceResourceId = $workspaceLine -split ': ', 2 | Select-Object -Last 1
-            Write-Host "workspaceResourceId : $workspaceResourceId"
-            $workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
-            Write-Host "print in create: $workspaceResourceGroup"
+            $line = $createOutput -split "`n" | Where-Object { $_ -match "Using Azure Monitor Workspace.*: (\/subscriptions\/[^`n`r]+)" }
+            if ($line) {
+                $workspaceResourceId = $matches[1]
+                Write-Host "workspaceResourceId : $workspaceResourceId"
+            
+                $workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
+                Write-Host "print in create: $workspaceResourceGroup"
+            } else {
+                Write-Host "Pattern not found in createOutput"
+            }
+
 
             $output = az $Env:K8sExtensionName show -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) --cluster-type connectedClusters -n $extensionName
             $? | Should -BeTrue
