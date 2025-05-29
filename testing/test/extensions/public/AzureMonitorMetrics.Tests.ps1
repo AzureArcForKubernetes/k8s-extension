@@ -5,6 +5,7 @@ Describe 'Azure Monitor Metrics Testing' {
             $extensionName = "azuremonitor-metrics"
             $extensionAgentName = "ama-metrics"
             $extensionAgentNamespace = "kube-system"
+            $workspaceResourceGroup = $null  # Initialize here for shared scope
 
             . $PSScriptRoot/../../helper/Constants.ps1
             . $PSScriptRoot/../../helper/Helper.ps1
@@ -19,8 +20,8 @@ Describe 'Azure Monitor Metrics Testing' {
                 $workspaceResourceId = $matches[1]
                 Write-Host "workspaceResourceId : $workspaceResourceId"
             
-                $workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
-                Write-Host "print in create: $workspaceResourceGroup"
+                $script:workspaceResourceGroup = ($workspaceResourceId -split '/resourceGroups/')[1] -split '/' | Select-Object -First 1
+                Write-Host "print in create: $script:workspaceResourceGroup"
             } else {
                 Write-Host "Pattern not found in createOutput"
             }
@@ -66,8 +67,8 @@ Describe 'Azure Monitor Metrics Testing' {
                 "NodeRecordingRulesRuleGroup-$clusterName"
             )
             
-            Write-Host "Workspace Resource Group: $workspaceResourceGroup"
-            $ruleGroups = az resource list --resource-group $workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
+            Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
+            $ruleGroups = az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
             $ruleGroups | Should -Not -BeNullOrEmpty
 
             foreach ($expectedName in $expectedRuleGroupNames) {
