@@ -68,7 +68,9 @@ Describe 'Azure Monitor Metrics Testing' {
             )
             
             Write-Host "Workspace Resource Group: $script:workspaceResourceGroup"
+            az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
             $ruleGroups = az resource list --resource-group $script:workspaceResourceGroup --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
+            Write-Host "ruleGroups: $ruleGroups"
             $ruleGroups | Should -Not -BeNullOrEmpty
 
             foreach ($expectedName in $expectedRuleGroupNames) {
