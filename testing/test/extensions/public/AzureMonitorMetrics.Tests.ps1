@@ -92,7 +92,8 @@ Describe 'Azure Monitor Metrics Testing' {
             # }
         
             Write-Host "`n--- All resources in workspace resource group ($script:workspaceResourceGroup) ---"
-            az resource list --resource-group $script:workspaceResourceGroup | ConvertFrom-Json | ConvertTo-Json -Depth 5
+            $allResources = az resource list --resource-group $script:workspaceResourceGroup
+            Write-Output $allResources
         }
 
 
