@@ -56,7 +56,6 @@ Describe 'Azure Monitor Metrics Testing' {
             )
 
             $ruleGroups = az resource list --resource-group $($ENVCONFIG.resourceGroup) --resource-type "Microsoft.AlertsManagement/prometheusRuleGroups" --query "[].{name:name, location:location, id:id}" | ConvertFrom-Json
-            Write-Host "Retrieved rule groups: $($ruleGroups | ConvertTo-Json -Depth 5)"
             $ruleGroups | Should -Not -BeNullOrEmpty -Because "Rule groups may take time to be created after extension onboarding"
         
             foreach ($expectedName in $expectedRuleGroupNames) {
