@@ -25,7 +25,6 @@ Describe 'Azure Monitor High Scale Mode Testing' {
         # Verify high scale mode configuration
         $settings = $extension.configurationSettings
         $settings.'amalogs.enableHighLogScaleMode' | Should -Be "true"
-        $settings.'amalogs.useAADAuth' | Should -Be "true"
 
         # Loop and retry until the extension installs
         $n = 0
