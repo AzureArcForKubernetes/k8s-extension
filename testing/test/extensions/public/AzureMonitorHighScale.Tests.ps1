@@ -13,7 +13,7 @@ Describe 'Azure Monitor High Scale Mode Testing' {
         # Create extension with high scale mode enabled
         az $Env:K8sExtensionName create -c $($ENVCONFIG.arcClusterName) -g $($ENVCONFIG.resourceGroup) `
             --cluster-type connectedClusters --extension-type $extensionType -n $extensionName `
-            --configuration-settings "amalogs.enableHighLogScaleMode=true" --no-wait
+            --configuration-settings "amalogs.useAADAuth=true" "amalogs.enableHighLogScaleMode=true" --no-wait
         $? | Should -BeTrue
 
         # Verify extension creation
@@ -50,12 +50,24 @@ Describe 'Azure Monitor High Scale Mode Testing' {
             }
         }
         
-        $dce = az monitor data-collection endpoint show -g $($ENVCONFIG.resourceGroup) -n $dceName
-        $? | Should -BeTrue
-        $dce | Should -Not -BeNullOrEmpty
+        # Wait for DCE to be fully created and configured
+        $maxRetries = 30  # 5 minutes total
+        $retryCount = 0
+        $dceObj = $null
         
-        # Verify DCE configuration
-        $dceObj = ($dce | ConvertFrom-Json)
+        while ($retryCount -lt $maxRetries) {
+            $dce = az monitor data-collection endpoint show -g $($ENVCONFIG.resourceGroup) -n $dceName 2>$null
+            if ($?) {
+                $dceObj = ($dce | ConvertFrom-Json)
+                if ($dceObj.properties.networkAcls.publicNetworkAccess -eq "Enabled") {
+                    break
+                }
+            }
+            Start-Sleep -Seconds 10
+            $retryCount++
+        }
+
+        $dceObj | Should -Not -BeNullOrEmpty
         $dceObj.kind | Should -Be "Linux"
         $dceObj.properties.networkAcls.publicNetworkAccess | Should -Be "Enabled"
     }
@@ -68,13 +80,29 @@ Describe 'Azure Monitor High Scale Mode Testing' {
             $dcrName = $dcrName.Substring(0, 64)
         }
 
-        # Get the DCR
-        $dcr = az monitor data-collection rule show -g $($ENVCONFIG.resourceGroup) -n $dcrName
-        $? | Should -BeTrue
-        $dcr | Should -Not -BeNullOrEmpty
+        # Wait for DCR to be fully created and configured
+        $maxRetries = 30  # 5 minutes total
+        $retryCount = 0
+        $dcrObj = $null
+        
+        while ($retryCount -lt $maxRetries) {
+            $dcr = az monitor data-collection rule show -g $($ENVCONFIG.resourceGroup) -n $dcrName 2>$null
+            if ($?) {
+                $dcrObj = ($dcr | ConvertFrom-Json)
+                if ($dcrObj.properties.dataSources.extensions -and 
+                    $dcrObj.properties.dataSources.extensions[0].streams) {
+                    break
+                }
+            }
+            Start-Sleep -Seconds 10
+            $retryCount++
+        }
+
+        $dcrObj | Should -Not -BeNullOrEmpty
+        $dcrObj.properties.dataSources.extensions | Should -Not -BeNullOrEmpty
+        $dcrObj.properties.dataSources.extensions[0].streams | Should -Not -BeNullOrEmpty
 
         # Verify high scale mode streams configuration
-        $dcrObj = ($dcr | ConvertFrom-Json)
         $streams = $dcrObj.properties.dataSources.extensions[0].streams
         $streams | Should -Contain "Microsoft-ContainerLogV2-HighScale"
         $streams | Should -Contain "Microsoft-KubeEvents"
