@@ -133,6 +133,8 @@ class ContainerInsights(DefaultExtension):
                     enable_high_log_scale_mode = (highLogScaleSetting.lower() == "true")
                 elif isinstance(highLogScaleSetting, bool):
                     enable_high_log_scale_mode = highLogScaleSetting
+                else:
+                    raise InvalidArgumentValueError('amalogs.enableHighLogScaleMode value MUST be either true/false or boolean type')
         if useAADAuth:
             association_url = cmd.cli_ctx.cloud.endpoints.resource_manager + f"{cluster_resource_id}/providers/Microsoft.Insights/dataCollectionRuleAssociations/ContainerInsightsExtension?api-version={DCR_API_VERSION}"
             for _ in range(3):
