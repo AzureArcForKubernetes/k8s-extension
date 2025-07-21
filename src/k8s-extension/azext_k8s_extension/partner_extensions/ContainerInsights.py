@@ -114,8 +114,12 @@ class ContainerInsights(DefaultExtension):
         resources = cf_resources(cmd.cli_ctx, subscription_id)
         # handle cluster type here
         cluster_resource_id = '/subscriptions/{0}/resourceGroups/{1}/providers/{2}/{3}/{4}'.format(subscription_id, resource_group_name, cluster_rp, cluster_type, cluster_name)
+        workspace_resource_id = None
         if (extension is not None) and (extension.configuration_settings is not None):
             configSettings = extension.configuration_settings
+            # Extract workspace resource ID if present
+            if 'logAnalyticsWorkspaceResourceID' in configSettings:
+                workspace_resource_id = configSettings['logAnalyticsWorkspaceResourceID']
             # omsagent is being renamed to ama-logs. Check for both for compatibility
             if 'omsagent.useAADAuth' in configSettings:
                 useAADAuthSetting = configSettings['omsagent.useAADAuth']
@@ -159,9 +163,22 @@ class ContainerInsights(DefaultExtension):
                     pass  # its OK to ignore the exception since MSI auth in preview
 
         if useAADAuth:
-            resource = resources.get_by_id(cluster_resource_id, '2020-01-01-preview')
-            cluster_location = resource.location.lower()
-            dcr_name = f"MSCI-{cluster_location}-{cluster_name}"
+            # Get the workspace region if workspace_resource_id is available
+            workspace_region = None
+            if workspace_resource_id:
+                try:
+                    workspace_resource = resources.get_by_id(workspace_resource_id, '2015-11-01-preview')
+                    workspace_region = workspace_resource.location.replace(" ", "").lower()
+                except Exception as ex:
+                    logger.warning("Skipping DCR and DCE deletion due to inability to determine workspace region")
+                    return
+            # If workspace_region still couldn't be determined, skip deletion
+            if not workspace_region:
+                logger.warning("Workspace region could not be determined. Skipping DCR and DCE deletion.")
+                return
+
+            # Use workspace_region for DCR name to match creation logic
+            dcr_name = f"MSCI-{workspace_region}-{cluster_name}"
             dcr_name = dcr_name[0:64]
             
             dcr_resource_id = f"/subscriptions/{subscription_id}/resourceGroups/{resource_group_name}/providers/Microsoft.Insights/dataCollectionRules/{dcr_name}"
