@@ -480,6 +480,61 @@
                     "version": "1.0.0b4"
                 },
                 "sha256Digest": "d90fbd7b3d200308b8f52bffa31bf9a4cdee1d96960a93d1bbefe5ad15e4f3a3"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/acrcssc-1.0.0b5-py3-none-any.whl",
+                "filename": "acrcssc-1.0.0b5-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.73.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.9",
+                        "Programming Language :: Python :: 3.10",
+                        "Programming Language :: Python :: 3.11",
+                        "Programming Language :: Python :: 3.12",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "kraterdev@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/master/src/acrcssc"
+                            }
+                        }
+                    },
+                    "extras": [],
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "acrcssc",
+                    "run_requires": [
+                        {
+                            "requires": [
+                                "croniter (~=3.0.0)",
+                                "croniter~=3.0.0",
+                                "oras (==0.2.25)",
+                                "oras==0.2.25"
+                            ]
+                        }
+                    ],
+                    "summary": "Microsoft Azure Container Registry Container Secure Supply Chain (CSSC) Extension",
+                    "version": "1.0.0b5"
+                },
+                "sha256Digest": "677c22fbfdd42be4d428713b30248ffc4b3c5621954eb95c69fa23c36605441b"
             }
         ],
         "acrquery": [
@@ -14570,6 +14625,145 @@
                     "version": "18.0.0b24"
                 },
                 "sha256Digest": "b9f37380f1d141c0bc642d143cae622437276767e2de128b1ff7f028fed319fd"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/aks_preview-18.0.0b25-py2.py3-none-any.whl",
+                "filename": "aks_preview-18.0.0b25-py2.py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.61.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/aks-preview"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "aks-preview",
+                    "summary": "Provides a preview for upcoming AKS features",
+                    "version": "18.0.0b25"
+                },
+                "sha256Digest": "fb2d48d0dbeb48c940529e4875a86f256a454563be4e61f4b3ca9b6d74cf3613"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/aks_preview-18.0.0b26-py2.py3-none-any.whl",
+                "filename": "aks_preview-18.0.0b26-py2.py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.61.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/aks-preview"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "aks-preview",
+                    "summary": "Provides a preview for upcoming AKS features",
+                    "version": "18.0.0b26"
+                },
+                "sha256Digest": "20241b59826ed0d1a45453ce82ea5659a0fd4f70e68d074b1cac6b3a7d828d0e"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/aks_preview-18.0.0b27-py2.py3-none-any.whl",
+                "filename": "aks_preview-18.0.0b27-py2.py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.61.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/aks-preview"
+                            }
+                        }
+                    },
+                    "extras": [],
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "aks-preview",
+                    "run_requires": [
+                        {
+                            "environment": "python_version >= \"3.10\"",
+                            "requires": [
+                                "holmesgpt (==0.12.4)",
+                                "holmesgpt==0.12.4"
+                            ]
+                        }
+                    ],
+                    "summary": "Provides a preview for upcoming AKS features",
+                    "version": "18.0.0b27"
+                },
+                "sha256Digest": "590d4713387c350353411ed159f582e0b2eac25557125f8f948246a10bec6a85"
             }
         ],
         "aksarc": [
@@ -17773,6 +17967,50 @@
                     "version": "2.7.0"
                 },
                 "sha256Digest": "5462b28eddde17cdcf7a18137cdc02664cf6acaaab55c17b62edaf237d6944e9"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/amg-2.8.0-py3-none-any.whl",
+                "filename": "amg-2.8.0-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": false,
+                    "azext.maxCliCoreVersion": "2.99.0",
+                    "azext.minCliCoreVersion": "2.61.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "ad4g@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/master/src/amg"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "amg",
+                    "summary": "Microsoft Azure Command-Line Tools Azure Managed Grafana Extension",
+                    "version": "2.8.0"
+                },
+                "sha256Digest": "13821dd797a8292b6a790ca76878ac64b719b2202931feae57f27cc56cffb39c"
             }
         ],
         "amlfs": [
@@ -18525,6 +18763,49 @@
                     "version": "1.2.0b2"
                 },
                 "sha256Digest": "42d6a28b15f975a5f7a4ea62ee39c9147d9c5def89d3e27fabd3c9559aa4136f"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/apic_extension-1.2.0b3-py3-none-any.whl",
+                "filename": "apic_extension-1.2.0b3-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.57.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "Programming Language :: Python :: 3.9",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/apic-extension"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "apic-extension",
+                    "summary": "Microsoft Azure Command-Line Tools ApicExtension Extension.",
+                    "version": "1.2.0b3"
+                },
+                "sha256Digest": "0133bb0770f3ce4f27b306a7e53bf29bb7a5a1edce0fd64efb2adf9294d6667b"
             }
         ],
         "application-insights": [
@@ -58647,6 +58928,49 @@
                     "version": "1.6.1"
                 },
                 "sha256Digest": "15e6b6ef312b92f28e4a737a5e74444de91a7b027f4060d45ae81b97023cd181"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/fleet-1.6.2-py3-none-any.whl",
+                "filename": "fleet-1.6.2-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": false,
+                    "azext.minCliCoreVersion": "2.61.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/fleet"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "fleet",
+                    "summary": "Microsoft Azure Command-Line Tools Fleet Extension",
+                    "version": "1.6.2"
+                },
+                "sha256Digest": "619a6683575689939eac64e0a2d06cb73601f45827c4f286bab4bb38fd3559b7"
             }
         ],
         "fluid-relay": [
@@ -65638,6 +65962,48 @@
                     "version": "1.6.6"
                 },
                 "sha256Digest": "1eddbaa6b0999aed43ba9363a38dbf689ba2c76a5b1623d6dff2932547702537"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/k8s_extension-1.6.7-py3-none-any.whl",
+                "filename": "k8s_extension-1.6.7-py3-none-any.whl",
+                "metadata": {
+                    "azext.minCliCoreVersion": "2.51.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/k8s-extension"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "k8s-extension",
+                    "summary": "Microsoft Azure Command-Line Tools K8s-extension Extension",
+                    "version": "1.6.7"
+                },
+                "sha256Digest": "4d4d9b01ce3866977ffc6cb389c957ed5f01535704c4afd276e28b57ef85c6a1"
             }
         ],
         "k8s-runtime": [
@@ -70083,6 +70449,90 @@
                     "version": "8.0.0b7"
                 },
                 "sha256Digest": "2224634fea95bee801dc1d0fc1c8d1cc6c53f97443d62b0d10506c2bd0f9ff9a"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/managednetworkfabric-8.0.0-py3-none-any.whl",
+                "filename": "managednetworkfabric-8.0.0-py3-none-any.whl",
+                "metadata": {
+                    "azext.minCliCoreVersion": "2.75.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "Programming Language :: Python :: 3.9",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/managednetworkfabric"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "managednetworkfabric",
+                    "summary": "Support for managednetworkfabric commands based on 2024-06-15-preview API version.",
+                    "version": "8.0.0"
+                },
+                "sha256Digest": "9dac44b98e1adb68249af11e26a83549f1244d22d892595cb45062c01650c86a"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/managednetworkfabric-8.1.0-py3-none-any.whl",
+                "filename": "managednetworkfabric-8.1.0-py3-none-any.whl",
+                "metadata": {
+                    "azext.minCliCoreVersion": "2.75.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "Programming Language :: Python :: 3.9",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/managednetworkfabric"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "managednetworkfabric",
+                    "summary": "Support for managednetworkfabric commands based on 2024-06-15-preview API version.",
+                    "version": "8.1.0"
+                },
+                "sha256Digest": "1d67d3bae62adcfd36177cda2bcb3c1cb92a45c74feff756c02cbf9d7ff2e2ef"
             }
         ],
         "managementpartner": [
@@ -80770,6 +81220,49 @@
                     "version": "1.1.1b1"
                 },
                 "sha256Digest": "8d4f6a4b72366bd57780bd158d6c25b363999e1a13ea85d491809cc9a4d29608"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/palo_alto_networks-1.1.2b1-py3-none-any.whl",
+                "filename": "palo_alto_networks-1.1.2b1-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.75.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "Programming Language :: Python :: 3.9",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/palo-alto-networks"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "palo-alto-networks",
+                    "summary": "Microsoft Azure Command-Line Tools PaloAltoNetworks Extension.",
+                    "version": "1.1.2b1"
+                },
+                "sha256Digest": "30112d58331e08ed9b2ecac9bbb343814b57b769a219115c2f7db44e190dd1b2"
             }
         ],
         "partnercenter": [
@@ -81860,6 +82353,51 @@
                     "version": "1.0.0b2"
                 },
                 "sha256Digest": "9aaad77022af004a963b3419ac10d233820ef3525db9e9f6f9fc797e1a859ad6"
+            }
+        ],
+        "pscloud": [
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/pscloud-1.0.0b1-py3-none-any.whl",
+                "filename": "pscloud-1.0.0b1-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.75.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "Programming Language :: Python :: 3.9",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/pscloud"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "pscloud",
+                    "summary": "Microsoft Azure Command-Line Tools Pscloud Extension.",
+                    "version": "1.0.0b1"
+                },
+                "sha256Digest": "688a1bbb0adfd73ef6814cd864b2c8ce4d6646bb1b21f5a5c60a5f27ed67db45"
             }
         ],
         "purview": [
@@ -83172,6 +83710,92 @@
                     "version": "1.0.0b7"
                 },
                 "sha256Digest": "7dbabd1114cb7d9d9adfcc551d4d1d1bcf85b219282f22f9502236680b0c8c1c"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/quantum-1.0.0b8-py3-none-any.whl",
+                "filename": "quantum-1.0.0b8-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.76.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "que-contacts@microsoft.com",
+                                    "name": "Microsoft Corporation, Quantum Team",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/quantum"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "quantum",
+                    "summary": "Microsoft Azure Command-Line Tools Quantum Extension",
+                    "version": "1.0.0b8"
+                },
+                "sha256Digest": "a40b93e490c96f66a53c595b58e78407beac96be3a5a3af9132d44e381a9c49c"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/quantum-1.0.0b9-py3-none-any.whl",
+                "filename": "quantum-1.0.0b9-py3-none-any.whl",
+                "metadata": {
+                    "azext.isPreview": true,
+                    "azext.minCliCoreVersion": "2.73.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "que-contacts@microsoft.com",
+                                    "name": "Microsoft Corporation, Quantum Team",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/quantum"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "quantum",
+                    "summary": "Microsoft Azure Command-Line Tools Quantum Extension",
+                    "version": "1.0.0b9"
+                },
+                "sha256Digest": "0d89d260eb00fa7649f55d8922a20707febdedaf404c92c19decab3ec1c6a156"
             }
         ],
         "qumulo": [
@@ -95310,6 +95934,48 @@
                     "version": "1.10.3"
                 },
                 "sha256Digest": "7ad3e8d6a04cbf3a93fe4b21a5d78749151b38e0c56a37ae262c85e88624f8fd"
+            },
+            {
+                "downloadUrl": "https://hciarcvmsstorage.z13.web.core.windows.net/cli-extensions/stack_hci_vm-1.10.4-py3-none-any.whl",
+                "filename": "stack_hci_vm-1.10.4-py3-none-any.whl",
+                "metadata": {
+                    "azext.minCliCoreVersion": "2.15.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/master/src/stack-hci-vm"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "stack-hci-vm",
+                    "summary": "Microsoft Azure Command-Line Tools Stack-HCi-VM Extension",
+                    "version": "1.10.4"
+                },
+                "sha256Digest": "32372943b6bee51c3a67b300573a1afea4fa1d25fab9a57e916a2230184afc93"
             }
         ],
         "standbypool": [
@@ -100106,6 +100772,48 @@
                     "version": "2.0.0"
                 },
                 "sha256Digest": "11b982aabb331b83c2f34c820e5f887f374ac34b4ee11d122fa883fb0ca6bbdc"
+            },
+            {
+                "downloadUrl": "https://azcliprod.blob.core.windows.net/cli-extensions/virtual_network_manager-2.0.1-py3-none-any.whl",
+                "filename": "virtual_network_manager-2.0.1-py3-none-any.whl",
+                "metadata": {
+                    "azext.minCliCoreVersion": "2.61.0",
+                    "classifiers": [
+                        "Development Status :: 4 - Beta",
+                        "Intended Audience :: Developers",
+                        "Intended Audience :: System Administrators",
+                        "Programming Language :: Python",
+                        "Programming Language :: Python :: 3",
+                        "Programming Language :: Python :: 3.6",
+                        "Programming Language :: Python :: 3.7",
+                        "Programming Language :: Python :: 3.8",
+                        "License :: OSI Approved :: MIT License"
+                    ],
+                    "extensions": {
+                        "python.details": {
+                            "contacts": [
+                                {
+                                    "email": "azpycli@microsoft.com",
+                                    "name": "Microsoft Corporation",
+                                    "role": "author"
+                                }
+                            ],
+                            "document_names": {
+                                "description": "DESCRIPTION.rst"
+                            },
+                            "project_urls": {
+                                "Home": "https://github.com/Azure/azure-cli-extensions/tree/main/src/network-manager"
+                            }
+                        }
+                    },
+                    "generator": "bdist_wheel (0.30.0)",
+                    "license": "MIT",
+                    "metadata_version": "2.0",
+                    "name": "virtual-network-manager",
+                    "summary": "Microsoft Azure Command-Line Tools NetworkManagementClient Extension",
+                    "version": "2.0.1"
+                },
+                "sha256Digest": "a7fa9d387f1aad575f528b25053d00976ea132284bf153cc0a57cd661c2dc6da"
             }
         ],
         "virtual-network-tap": [
