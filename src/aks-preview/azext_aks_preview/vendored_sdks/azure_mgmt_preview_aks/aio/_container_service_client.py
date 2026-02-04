@@ -22,12 +22,14 @@ from .operations import (
     AgentPoolsOperations,
     ContainerServiceOperations,
     IdentityBindingsOperations,
+    JWTAuthenticatorsOperations,
     LoadBalancersOperations,
     MachinesOperations,
     MaintenanceConfigurationsOperations,
     ManagedClusterSnapshotsOperations,
     ManagedClustersOperations,
     ManagedNamespacesOperations,
+    MeshMembershipsOperations,
     OperationStatusResultOperations,
     Operations,
     PrivateEndpointConnectionsOperations,
@@ -90,13 +92,18 @@ class ContainerServiceClient:  # pylint: disable=too-many-instance-attributes
     :ivar identity_bindings: IdentityBindingsOperations operations
     :vartype identity_bindings:
      azure.mgmt.containerservice.aio.operations.IdentityBindingsOperations
+    :ivar jwt_authenticators: JWTAuthenticatorsOperations operations
+    :vartype jwt_authenticators:
+     azure.mgmt.containerservice.aio.operations.JWTAuthenticatorsOperations
+    :ivar mesh_memberships: MeshMembershipsOperations operations
+    :vartype mesh_memberships: azure.mgmt.containerservice.aio.operations.MeshMembershipsOperations
     :param credential: Credential needed for the client to connect to Azure. Required.
     :type credential: ~azure.core.credentials_async.AsyncTokenCredential
     :param subscription_id: The ID of the target subscription. The value must be an UUID. Required.
     :type subscription_id: str
     :param base_url: Service URL. Default value is "https://management.azure.com".
     :type base_url: str
-    :keyword api_version: Api Version. Default value is "2025-06-02-preview". Note that overriding
+    :keyword api_version: Api Version. Default value is "2025-10-02-preview". Note that overriding
      this default value may result in unsupported behavior.
     :paramtype api_version: str
     :keyword int polling_interval: Default waiting time between two polls for LRO operations if no
@@ -176,6 +183,12 @@ class ContainerServiceClient:  # pylint: disable=too-many-instance-attributes
         )
         self.load_balancers = LoadBalancersOperations(self._client, self._config, self._serialize, self._deserialize)
         self.identity_bindings = IdentityBindingsOperations(
+            self._client, self._config, self._serialize, self._deserialize
+        )
+        self.jwt_authenticators = JWTAuthenticatorsOperations(
+            self._client, self._config, self._serialize, self._deserialize
+        )
+        self.mesh_memberships = MeshMembershipsOperations(
             self._client, self._config, self._serialize, self._deserialize
         )
 

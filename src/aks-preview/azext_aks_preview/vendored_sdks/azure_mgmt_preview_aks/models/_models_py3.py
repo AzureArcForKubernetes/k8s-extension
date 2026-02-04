@@ -64,12 +64,16 @@ class AdvancedNetworking(_serialization.Model):
     :vartype observability: ~azure.mgmt.containerservice.models.AdvancedNetworkingObservability
     :ivar security: Security profile to enable security features on cilium-based cluster.
     :vartype security: ~azure.mgmt.containerservice.models.AdvancedNetworkingSecurity
+    :ivar performance: Profile to enable performance-enhancing features on clusters that use Azure
+     CNI powered by Cilium.
+    :vartype performance: ~azure.mgmt.containerservice.models.AdvancedNetworkingPerformance
     """
 
     _attribute_map = {
         "enabled": {"key": "enabled", "type": "bool"},
         "observability": {"key": "observability", "type": "AdvancedNetworkingObservability"},
         "security": {"key": "security", "type": "AdvancedNetworkingSecurity"},
+        "performance": {"key": "performance", "type": "AdvancedNetworkingPerformance"},
     }
 
     def __init__(
@@ -78,6 +82,7 @@ class AdvancedNetworking(_serialization.Model):
         enabled: Optional[bool] = None,
         observability: Optional["_models.AdvancedNetworkingObservability"] = None,
         security: Optional["_models.AdvancedNetworkingSecurity"] = None,
+        performance: Optional["_models.AdvancedNetworkingPerformance"] = None,
         **kwargs: Any
     ) -> None:
         """
@@ -91,11 +96,15 @@ class AdvancedNetworking(_serialization.Model):
         :paramtype observability: ~azure.mgmt.containerservice.models.AdvancedNetworkingObservability
         :keyword security: Security profile to enable security features on cilium-based cluster.
         :paramtype security: ~azure.mgmt.containerservice.models.AdvancedNetworkingSecurity
+        :keyword performance: Profile to enable performance-enhancing features on clusters that use
+         Azure CNI powered by Cilium.
+        :paramtype performance: ~azure.mgmt.containerservice.models.AdvancedNetworkingPerformance
         """
         super().__init__(**kwargs)
         self.enabled = enabled
         self.observability = observability
         self.security = security
+        self.performance = performance
 
 
 class AdvancedNetworkingObservability(_serialization.Model):
@@ -119,6 +128,35 @@ class AdvancedNetworkingObservability(_serialization.Model):
         """
         super().__init__(**kwargs)
         self.enabled = enabled
+
+
+class AdvancedNetworkingPerformance(_serialization.Model):
+    """Profile to enable performance-enhancing features on clusters that use Azure CNI powered by
+    Cilium.
+
+    :ivar acceleration_mode: Enable advanced network acceleration options. This allows users to
+     configure acceleration using BPF host routing. This can be enabled only with Cilium dataplane.
+     If not specified, the default value is None (no acceleration). The acceleration mode can be
+     changed on a pre-existing cluster. See https://aka.ms/acnsperformance for a detailed
+     explanation. Known values are: "BpfVeth" and "None".
+    :vartype acceleration_mode: str or ~azure.mgmt.containerservice.models.AccelerationMode
+    """
+
+    _attribute_map = {
+        "acceleration_mode": {"key": "accelerationMode", "type": "str"},
+    }
+
+    def __init__(self, *, acceleration_mode: Union[str, "_models.AccelerationMode"] = "None", **kwargs: Any) -> None:
+        """
+        :keyword acceleration_mode: Enable advanced network acceleration options. This allows users to
+         configure acceleration using BPF host routing. This can be enabled only with Cilium dataplane.
+         If not specified, the default value is None (no acceleration). The acceleration mode can be
+         changed on a pre-existing cluster. See https://aka.ms/acnsperformance for a detailed
+         explanation. Known values are: "BpfVeth" and "None".
+        :paramtype acceleration_mode: str or ~azure.mgmt.containerservice.models.AccelerationMode
+        """
+        super().__init__(**kwargs)
+        self.acceleration_mode = acceleration_mode
 
 
 class AdvancedNetworkingSecurity(_serialization.Model):
@@ -251,7 +289,7 @@ class AgentPool(SubResource):
     :vartype type: str
     :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
      will change when the resource is updated. Specify an if-match or if-none-match header with the
-     eTag value for a subsequent request to enable optimistic concurrency per the normal etag
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
      convention.
     :vartype e_tag: str
     :ivar count: Number of agents (VMs) to host docker containers. Allowed values must be in the
@@ -277,7 +315,7 @@ class AgentPool(SubResource):
      root, and Kubelet ephemeral storage. Known values are: "OS" and "Temporary".
     :vartype kubelet_disk_type: str or ~azure.mgmt.containerservice.models.KubeletDiskType
     :ivar workload_runtime: Determines the type of workload a node can run. Known values are:
-     "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+     "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
     :vartype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
     :ivar message_of_the_day: Message of the day for Linux nodes, base64-encoded. A base64-encoded
      string which will be written to /etc/motd after decoding. This allows customization of the
@@ -307,8 +345,8 @@ class AgentPool(SubResource):
     :ivar os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
      Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
      changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-     "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-     "Ubuntu2204", and "Ubuntu2404".
+     "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+     "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
     :vartype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
     :ivar max_count: The maximum number of nodes for auto-scaling.
     :vartype max_count: int
@@ -346,8 +384,16 @@ class AgentPool(SubResource):
     :vartype current_orchestrator_version: str
     :ivar node_image_version: The version of node image.
     :vartype node_image_version: str
-    :ivar upgrade_settings: Settings for upgrading the agentpool.
+    :ivar upgrade_strategy: Defines the upgrade strategy for the agent pool. The default is
+     Rolling. Known values are: "Rolling" and "BlueGreen".
+    :vartype upgrade_strategy: str or ~azure.mgmt.containerservice.models.UpgradeStrategy
+    :ivar upgrade_settings: Settings for upgrading the agentpool. Applies when upgrade strategy is
+     set to Rolling.
     :vartype upgrade_settings: ~azure.mgmt.containerservice.models.AgentPoolUpgradeSettings
+    :ivar upgrade_settings_blue_green: Settings for Blue-Green upgrade on the agentpool. Applies
+     when upgrade strategy is set to BlueGreen.
+    :vartype upgrade_settings_blue_green:
+     ~azure.mgmt.containerservice.models.AgentPoolBlueGreenUpgradeSettings
     :ivar provisioning_state: The current deployment or provisioning state.
     :vartype provisioning_state: str
     :ivar power_state: Whether the Agent Pool is running or stopped. When an Agent Pool is first
@@ -365,11 +411,6 @@ class AgentPool(SubResource):
      <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#assign-a-public-ip-per-node-for-your-node-pools>`_.
      The default is false.
     :vartype enable_node_public_ip: bool
-    :ivar enable_custom_ca_trust: Whether to enable Custom CA Trust feature. When set to true, AKS
-     adds a label to the node indicating that the feature is enabled and deploys a daemonset along
-     with host services to sync custom certificate authorities from user-provided list of base64
-     encoded certificates into node trust stores. Defaults to false.
-    :vartype enable_custom_ca_trust: bool
     :ivar node_public_ip_prefix_id: The public IP prefix ID which VM nodes should use IPs from.
      This is of the form:
      /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}.
@@ -460,6 +501,10 @@ class AgentPool(SubResource):
      LocalDNS helps improve performance and reliability of DNS resolution in an AKS cluster. For
      more details see aka.ms/aks/localdns.
     :vartype local_dns_profile: ~azure.mgmt.containerservice.models.LocalDNSProfile
+    :ivar node_customization_profile: Settings to determine the node customization used to
+     provision nodes in a pool.
+    :vartype node_customization_profile:
+     ~azure.mgmt.containerservice.models.NodeCustomizationProfile
     """
 
     _validation = {
@@ -469,7 +514,6 @@ class AgentPool(SubResource):
         "e_tag": {"readonly": True},
         "os_disk_size_gb": {"maximum": 2048, "minimum": 0},
         "current_orchestrator_version": {"readonly": True},
-        "node_image_version": {"readonly": True},
         "provisioning_state": {"readonly": True},
     }
 
@@ -500,12 +544,16 @@ class AgentPool(SubResource):
         "orchestrator_version": {"key": "properties.orchestratorVersion", "type": "str"},
         "current_orchestrator_version": {"key": "properties.currentOrchestratorVersion", "type": "str"},
         "node_image_version": {"key": "properties.nodeImageVersion", "type": "str"},
+        "upgrade_strategy": {"key": "properties.upgradeStrategy", "type": "str"},
         "upgrade_settings": {"key": "properties.upgradeSettings", "type": "AgentPoolUpgradeSettings"},
+        "upgrade_settings_blue_green": {
+            "key": "properties.upgradeSettingsBlueGreen",
+            "type": "AgentPoolBlueGreenUpgradeSettings",
+        },
         "provisioning_state": {"key": "properties.provisioningState", "type": "str"},
         "power_state": {"key": "properties.powerState", "type": "PowerState"},
         "availability_zones": {"key": "properties.availabilityZones", "type": "[str]"},
         "enable_node_public_ip": {"key": "properties.enableNodePublicIP", "type": "bool"},
-        "enable_custom_ca_trust": {"key": "properties.enableCustomCATrust", "type": "bool"},
         "node_public_ip_prefix_id": {"key": "properties.nodePublicIPPrefixID", "type": "str"},
         "scale_set_priority": {"key": "properties.scaleSetPriority", "type": "str"},
         "scale_set_eviction_policy": {"key": "properties.scaleSetEvictionPolicy", "type": "str"},
@@ -540,6 +588,10 @@ class AgentPool(SubResource):
         "gateway_profile": {"key": "properties.gatewayProfile", "type": "AgentPoolGatewayProfile"},
         "status": {"key": "properties.status", "type": "AgentPoolStatus"},
         "local_dns_profile": {"key": "properties.localDNSProfile", "type": "LocalDNSProfile"},
+        "node_customization_profile": {
+            "key": "properties.nodeCustomizationProfile",
+            "type": "NodeCustomizationProfile",
+        },
     }
 
     def __init__(  # pylint: disable=too-many-locals
@@ -565,11 +617,13 @@ class AgentPool(SubResource):
         type_properties_type: Optional[Union[str, "_models.AgentPoolType"]] = None,
         mode: Optional[Union[str, "_models.AgentPoolMode"]] = None,
         orchestrator_version: Optional[str] = None,
+        node_image_version: Optional[str] = None,
+        upgrade_strategy: Optional[Union[str, "_models.UpgradeStrategy"]] = None,
         upgrade_settings: Optional["_models.AgentPoolUpgradeSettings"] = None,
+        upgrade_settings_blue_green: Optional["_models.AgentPoolBlueGreenUpgradeSettings"] = None,
         power_state: Optional["_models.PowerState"] = None,
         availability_zones: Optional[List[str]] = None,
         enable_node_public_ip: Optional[bool] = None,
-        enable_custom_ca_trust: Optional[bool] = None,
         node_public_ip_prefix_id: Optional[str] = None,
         scale_set_priority: Union[str, "_models.ScaleSetPriority"] = "Regular",
         scale_set_eviction_policy: Union[str, "_models.ScaleSetEvictionPolicy"] = "Delete",
@@ -598,6 +652,7 @@ class AgentPool(SubResource):
         gateway_profile: Optional["_models.AgentPoolGatewayProfile"] = None,
         status: Optional["_models.AgentPoolStatus"] = None,
         local_dns_profile: Optional["_models.LocalDNSProfile"] = None,
+        node_customization_profile: Optional["_models.NodeCustomizationProfile"] = None,
         **kwargs: Any
     ) -> None:
         """
@@ -625,7 +680,7 @@ class AgentPool(SubResource):
          data root, and Kubelet ephemeral storage. Known values are: "OS" and "Temporary".
         :paramtype kubelet_disk_type: str or ~azure.mgmt.containerservice.models.KubeletDiskType
         :keyword workload_runtime: Determines the type of workload a node can run. Known values are:
-         "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+         "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
         :paramtype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
         :keyword message_of_the_day: Message of the day for Linux nodes, base64-encoded. A
          base64-encoded string which will be written to /etc/motd after decoding. This allows
@@ -656,8 +711,8 @@ class AgentPool(SubResource):
         :keyword os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
          Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
          changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-         "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-         "Ubuntu2204", and "Ubuntu2404".
+         "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+         "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
         :paramtype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
         :keyword max_count: The maximum number of nodes for auto-scaling.
         :paramtype max_count: int
@@ -688,8 +743,18 @@ class AgentPool(SubResource):
          information see `upgrading a node pool
          <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#upgrade-a-node-pool>`_.
         :paramtype orchestrator_version: str
-        :keyword upgrade_settings: Settings for upgrading the agentpool.
+        :keyword node_image_version: The version of node image.
+        :paramtype node_image_version: str
+        :keyword upgrade_strategy: Defines the upgrade strategy for the agent pool. The default is
+         Rolling. Known values are: "Rolling" and "BlueGreen".
+        :paramtype upgrade_strategy: str or ~azure.mgmt.containerservice.models.UpgradeStrategy
+        :keyword upgrade_settings: Settings for upgrading the agentpool. Applies when upgrade strategy
+         is set to Rolling.
         :paramtype upgrade_settings: ~azure.mgmt.containerservice.models.AgentPoolUpgradeSettings
+        :keyword upgrade_settings_blue_green: Settings for Blue-Green upgrade on the agentpool. Applies
+         when upgrade strategy is set to BlueGreen.
+        :paramtype upgrade_settings_blue_green:
+         ~azure.mgmt.containerservice.models.AgentPoolBlueGreenUpgradeSettings
         :keyword power_state: Whether the Agent Pool is running or stopped. When an Agent Pool is first
          created it is initially Running. The Agent Pool can be stopped by setting this field to
          Stopped. A stopped Agent Pool stops all of its VMs and does not accrue billing charges. An
@@ -706,11 +771,6 @@ class AgentPool(SubResource):
          <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#assign-a-public-ip-per-node-for-your-node-pools>`_.
          The default is false.
         :paramtype enable_node_public_ip: bool
-        :keyword enable_custom_ca_trust: Whether to enable Custom CA Trust feature. When set to true,
-         AKS adds a label to the node indicating that the feature is enabled and deploys a daemonset
-         along with host services to sync custom certificate authorities from user-provided list of
-         base64 encoded certificates into node trust stores. Defaults to false.
-        :paramtype enable_custom_ca_trust: bool
         :keyword node_public_ip_prefix_id: The public IP prefix ID which VM nodes should use IPs from.
          This is of the form:
          /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}.
@@ -803,6 +863,10 @@ class AgentPool(SubResource):
          overrides. LocalDNS helps improve performance and reliability of DNS resolution in an AKS
          cluster. For more details see aka.ms/aks/localdns.
         :paramtype local_dns_profile: ~azure.mgmt.containerservice.models.LocalDNSProfile
+        :keyword node_customization_profile: Settings to determine the node customization used to
+         provision nodes in a pool.
+        :paramtype node_customization_profile:
+         ~azure.mgmt.containerservice.models.NodeCustomizationProfile
         """
         super().__init__(**kwargs)
         self.e_tag: Optional[str] = None
@@ -827,13 +891,14 @@ class AgentPool(SubResource):
         self.mode = mode
         self.orchestrator_version = orchestrator_version
         self.current_orchestrator_version: Optional[str] = None
-        self.node_image_version: Optional[str] = None
+        self.node_image_version = node_image_version
+        self.upgrade_strategy = upgrade_strategy
         self.upgrade_settings = upgrade_settings
+        self.upgrade_settings_blue_green = upgrade_settings_blue_green
         self.provisioning_state: Optional[str] = None
         self.power_state = power_state
         self.availability_zones = availability_zones
         self.enable_node_public_ip = enable_node_public_ip
-        self.enable_custom_ca_trust = enable_custom_ca_trust
         self.node_public_ip_prefix_id = node_public_ip_prefix_id
         self.scale_set_priority = scale_set_priority
         self.scale_set_eviction_policy = scale_set_eviction_policy
@@ -862,6 +927,7 @@ class AgentPool(SubResource):
         self.gateway_profile = gateway_profile
         self.status = status
         self.local_dns_profile = local_dns_profile
+        self.node_customization_profile = node_customization_profile
 
 
 class AgentPoolArtifactStreamingProfile(_serialization.Model):
@@ -975,6 +1041,82 @@ class AgentPoolAvailableVersionsPropertiesAgentPoolVersionsItem(_serialization.M
         self.default = default
         self.kubernetes_version = kubernetes_version
         self.is_preview = is_preview
+
+
+class AgentPoolBlueGreenUpgradeSettings(_serialization.Model):
+    """Settings for blue-green upgrade on an agentpool.
+
+    :ivar drain_batch_size: The number or percentage of nodes to drain in batch during blue-green
+     upgrade. Must be a non-zero number. This can either be set to an integer (e.g. '5') or a
+     percentage (e.g. '50%'). If a percentage is specified, it is the percentage of the total number
+     of blue nodes of the initial upgrade operation. For percentages, fractional nodes are rounded
+     up. If not specified, the default is 10%. For more information, including best practices, see:
+     https://learn.microsoft.com/en-us/azure/aks/upgrade-cluster.
+    :vartype drain_batch_size: str
+    :ivar drain_timeout_in_minutes: The drain timeout for a node, i.e., the amount of time (in
+     minutes) to wait on eviction of pods and graceful termination per node. This eviction wait time
+     honors waiting on pod disruption budgets. If this time is exceeded, the upgrade fails. If not
+     specified, the default is 30 minutes.
+    :vartype drain_timeout_in_minutes: int
+    :ivar batch_soak_duration_in_minutes: The soak duration after draining a batch of nodes, i.e.,
+     the amount of time (in minutes) to wait after draining a batch of nodes before moving on the
+     next batch. If not specified, the default is 15 minutes.
+    :vartype batch_soak_duration_in_minutes: int
+    :ivar final_soak_duration_in_minutes: The soak duration for a node pool, i.e., the amount of
+     time (in minutes) to wait after all old nodes are drained before we remove the old nodes. If
+     not specified, the default is 60 minutes. Only applicable for blue-green upgrade strategy.
+    :vartype final_soak_duration_in_minutes: int
+    """
+
+    _validation = {
+        "drain_timeout_in_minutes": {"maximum": 1440, "minimum": 1},
+        "batch_soak_duration_in_minutes": {"maximum": 1440, "minimum": 0},
+        "final_soak_duration_in_minutes": {"maximum": 10080, "minimum": 0},
+    }
+
+    _attribute_map = {
+        "drain_batch_size": {"key": "drainBatchSize", "type": "str"},
+        "drain_timeout_in_minutes": {"key": "drainTimeoutInMinutes", "type": "int"},
+        "batch_soak_duration_in_minutes": {"key": "batchSoakDurationInMinutes", "type": "int"},
+        "final_soak_duration_in_minutes": {"key": "finalSoakDurationInMinutes", "type": "int"},
+    }
+
+    def __init__(
+        self,
+        *,
+        drain_batch_size: Optional[str] = None,
+        drain_timeout_in_minutes: Optional[int] = None,
+        batch_soak_duration_in_minutes: Optional[int] = None,
+        final_soak_duration_in_minutes: Optional[int] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword drain_batch_size: The number or percentage of nodes to drain in batch during
+         blue-green upgrade. Must be a non-zero number. This can either be set to an integer (e.g. '5')
+         or a percentage (e.g. '50%'). If a percentage is specified, it is the percentage of the total
+         number of blue nodes of the initial upgrade operation. For percentages, fractional nodes are
+         rounded up. If not specified, the default is 10%. For more information, including best
+         practices, see: https://learn.microsoft.com/en-us/azure/aks/upgrade-cluster.
+        :paramtype drain_batch_size: str
+        :keyword drain_timeout_in_minutes: The drain timeout for a node, i.e., the amount of time (in
+         minutes) to wait on eviction of pods and graceful termination per node. This eviction wait time
+         honors waiting on pod disruption budgets. If this time is exceeded, the upgrade fails. If not
+         specified, the default is 30 minutes.
+        :paramtype drain_timeout_in_minutes: int
+        :keyword batch_soak_duration_in_minutes: The soak duration after draining a batch of nodes,
+         i.e., the amount of time (in minutes) to wait after draining a batch of nodes before moving on
+         the next batch. If not specified, the default is 15 minutes.
+        :paramtype batch_soak_duration_in_minutes: int
+        :keyword final_soak_duration_in_minutes: The soak duration for a node pool, i.e., the amount of
+         time (in minutes) to wait after all old nodes are drained before we remove the old nodes. If
+         not specified, the default is 60 minutes. Only applicable for blue-green upgrade strategy.
+        :paramtype final_soak_duration_in_minutes: int
+        """
+        super().__init__(**kwargs)
+        self.drain_batch_size = drain_batch_size
+        self.drain_timeout_in_minutes = drain_timeout_in_minutes
+        self.batch_soak_duration_in_minutes = batch_soak_duration_in_minutes
+        self.final_soak_duration_in_minutes = final_soak_duration_in_minutes
 
 
 class AgentPoolDeleteMachinesParameter(_serialization.Model):
@@ -1110,11 +1252,51 @@ class AgentPoolNetworkProfile(_serialization.Model):
         self.application_security_groups = application_security_groups
 
 
+class AgentPoolRecentlyUsedVersion(_serialization.Model):
+    """A historical version that can be used for rollback operations.
+
+    :ivar orchestrator_version: The Kubernetes version (major.minor.patch) available for rollback.
+    :vartype orchestrator_version: str
+    :ivar node_image_version: The node image version available for rollback.
+    :vartype node_image_version: str
+    :ivar timestamp: The timestamp when this version was last used.
+    :vartype timestamp: ~datetime.datetime
+    """
+
+    _attribute_map = {
+        "orchestrator_version": {"key": "orchestratorVersion", "type": "str"},
+        "node_image_version": {"key": "nodeImageVersion", "type": "str"},
+        "timestamp": {"key": "timestamp", "type": "iso-8601"},
+    }
+
+    def __init__(
+        self,
+        *,
+        orchestrator_version: Optional[str] = None,
+        node_image_version: Optional[str] = None,
+        timestamp: Optional[datetime.datetime] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword orchestrator_version: The Kubernetes version (major.minor.patch) available for
+         rollback.
+        :paramtype orchestrator_version: str
+        :keyword node_image_version: The node image version available for rollback.
+        :paramtype node_image_version: str
+        :keyword timestamp: The timestamp when this version was last used.
+        :paramtype timestamp: ~datetime.datetime
+        """
+        super().__init__(**kwargs)
+        self.orchestrator_version = orchestrator_version
+        self.node_image_version = node_image_version
+        self.timestamp = timestamp
+
+
 class AgentPoolSecurityProfile(_serialization.Model):
     """The security settings of an agent pool.
 
-    :ivar ssh_access: SSH access method of an agent pool. Known values are: "LocalUser" and
-     "Disabled".
+    :ivar ssh_access: SSH access method of an agent pool. Known values are: "LocalUser",
+     "Disabled", and "EntraId".
     :vartype ssh_access: str or ~azure.mgmt.containerservice.models.AgentPoolSSHAccess
     :ivar enable_vtpm: vTPM is a Trusted Launch feature for configuring a dedicated secure vault
      for keys and measurements held locally on the node. For more details, see
@@ -1141,8 +1323,8 @@ class AgentPoolSecurityProfile(_serialization.Model):
         **kwargs: Any
     ) -> None:
         """
-        :keyword ssh_access: SSH access method of an agent pool. Known values are: "LocalUser" and
-         "Disabled".
+        :keyword ssh_access: SSH access method of an agent pool. Known values are: "LocalUser",
+         "Disabled", and "EntraId".
         :paramtype ssh_access: str or ~azure.mgmt.containerservice.models.AgentPoolSSHAccess
         :keyword enable_vtpm: vTPM is a Trusted Launch feature for configuring a dedicated secure vault
          for keys and measurements held locally on the node. For more details, see
@@ -1166,7 +1348,7 @@ class AgentPoolStatus(_serialization.Model):
 
     :ivar provisioning_error: The error detail information of the agent pool. Preserves the
      detailed info of failure. If there was no error, this field is omitted.
-    :vartype provisioning_error: ~azure.mgmt.containerservice.models.CloudErrorBody
+    :vartype provisioning_error: ~azure.mgmt.containerservice.models.ErrorDetail
     """
 
     _validation = {
@@ -1174,13 +1356,13 @@ class AgentPoolStatus(_serialization.Model):
     }
 
     _attribute_map = {
-        "provisioning_error": {"key": "provisioningError", "type": "CloudErrorBody"},
+        "provisioning_error": {"key": "provisioningError", "type": "ErrorDetail"},
     }
 
     def __init__(self, **kwargs: Any) -> None:
         """ """
         super().__init__(**kwargs)
-        self.provisioning_error: Optional["_models.CloudErrorBody"] = None
+        self.provisioning_error: Optional["_models.ErrorDetail"] = None
 
 
 class AgentPoolUpgradeProfile(_serialization.Model):
@@ -1206,6 +1388,9 @@ class AgentPoolUpgradeProfile(_serialization.Model):
      list[~azure.mgmt.containerservice.models.AgentPoolUpgradeProfilePropertiesUpgradesItem]
     :ivar components_by_releases: List of components grouped by kubernetes major.minor version.
     :vartype components_by_releases: list[~azure.mgmt.containerservice.models.ComponentsByRelease]
+    :ivar recently_used_versions: List of historical good versions for rollback operations.
+    :vartype recently_used_versions:
+     list[~azure.mgmt.containerservice.models.AgentPoolRecentlyUsedVersion]
     :ivar latest_node_image_version: The latest AKS supported node image version.
     :vartype latest_node_image_version: str
     """
@@ -1216,6 +1401,7 @@ class AgentPoolUpgradeProfile(_serialization.Model):
         "type": {"readonly": True},
         "kubernetes_version": {"required": True},
         "os_type": {"required": True},
+        "recently_used_versions": {"readonly": True},
     }
 
     _attribute_map = {
@@ -1226,6 +1412,7 @@ class AgentPoolUpgradeProfile(_serialization.Model):
         "os_type": {"key": "properties.osType", "type": "str"},
         "upgrades": {"key": "properties.upgrades", "type": "[AgentPoolUpgradeProfilePropertiesUpgradesItem]"},
         "components_by_releases": {"key": "properties.componentsByReleases", "type": "[ComponentsByRelease]"},
+        "recently_used_versions": {"key": "properties.recentlyUsedVersions", "type": "[AgentPoolRecentlyUsedVersion]"},
         "latest_node_image_version": {"key": "properties.latestNodeImageVersion", "type": "str"},
     }
 
@@ -1262,6 +1449,7 @@ class AgentPoolUpgradeProfile(_serialization.Model):
         self.os_type = os_type
         self.upgrades = upgrades
         self.components_by_releases = components_by_releases
+        self.recently_used_versions: Optional[List["_models.AgentPoolRecentlyUsedVersion"]] = None
         self.latest_node_image_version = latest_node_image_version
 
 
@@ -1305,7 +1493,7 @@ class AgentPoolUpgradeProfilePropertiesUpgradesItem(_serialization.Model):  # py
 
 
 class AgentPoolUpgradeSettings(_serialization.Model):
-    """Settings for upgrading an agentpool.
+    """Settings for rolling upgrade on an agentpool.
 
     :ivar max_surge: The maximum number or percentage of nodes that are surged during upgrade. This
      can either be set to an integer (e.g. '5') or a percentage (e.g. '50%'). If a percentage is
@@ -1553,58 +1741,6 @@ class AzureKeyVaultKms(_serialization.Model):
         self.key_id = key_id
         self.key_vault_network_access = key_vault_network_access
         self.key_vault_resource_id = key_vault_resource_id
-
-
-class CloudErrorBody(_serialization.Model):
-    """An error response from the Container service.
-
-    :ivar code: An identifier for the error. Codes are invariant and are intended to be consumed
-     programmatically.
-    :vartype code: str
-    :ivar message: A message describing the error, intended to be suitable for display in a user
-     interface.
-    :vartype message: str
-    :ivar target: The target of the particular error. For example, the name of the property in
-     error.
-    :vartype target: str
-    :ivar details: A list of additional details about the error.
-    :vartype details: list[~azure.mgmt.containerservice.models.CloudErrorBody]
-    """
-
-    _attribute_map = {
-        "code": {"key": "code", "type": "str"},
-        "message": {"key": "message", "type": "str"},
-        "target": {"key": "target", "type": "str"},
-        "details": {"key": "details", "type": "[CloudErrorBody]"},
-    }
-
-    def __init__(
-        self,
-        *,
-        code: Optional[str] = None,
-        message: Optional[str] = None,
-        target: Optional[str] = None,
-        details: Optional[List["_models.CloudErrorBody"]] = None,
-        **kwargs: Any
-    ) -> None:
-        """
-        :keyword code: An identifier for the error. Codes are invariant and are intended to be consumed
-         programmatically.
-        :paramtype code: str
-        :keyword message: A message describing the error, intended to be suitable for display in a user
-         interface.
-        :paramtype message: str
-        :keyword target: The target of the particular error. For example, the name of the property in
-         error.
-        :paramtype target: str
-        :keyword details: A list of additional details about the error.
-        :paramtype details: list[~azure.mgmt.containerservice.models.CloudErrorBody]
-        """
-        super().__init__(**kwargs)
-        self.code = code
-        self.message = message
-        self.target = target
-        self.details = details
 
 
 class ClusterUpgradeSettings(_serialization.Model):
@@ -1997,8 +2133,8 @@ class ContainerServiceNetworkProfileKubeProxyConfig(_serialization.Model):  # py
     :ivar enabled: Whether to enable on kube-proxy on the cluster (if no 'kubeProxyConfig' exists,
      kube-proxy is enabled in AKS by default without these customizations).
     :vartype enabled: bool
-    :ivar mode: Specify which proxy mode to use ('IPTABLES' or 'IPVS'). Known values are:
-     "IPTABLES" and "IPVS".
+    :ivar mode: Specify which proxy mode to use ('IPTABLES', 'IPVS' or 'NFTABLES'). Known values
+     are: "IPTABLES", "IPVS", and "NFTABLES".
     :vartype mode: str or ~azure.mgmt.containerservice.models.Mode
     :ivar ipvs_config: Holds configuration customizations for IPVS. May only be specified if 'mode'
      is set to 'IPVS'.
@@ -2024,8 +2160,8 @@ class ContainerServiceNetworkProfileKubeProxyConfig(_serialization.Model):  # py
         :keyword enabled: Whether to enable on kube-proxy on the cluster (if no 'kubeProxyConfig'
          exists, kube-proxy is enabled in AKS by default without these customizations).
         :paramtype enabled: bool
-        :keyword mode: Specify which proxy mode to use ('IPTABLES' or 'IPVS'). Known values are:
-         "IPTABLES" and "IPVS".
+        :keyword mode: Specify which proxy mode to use ('IPTABLES', 'IPVS' or 'NFTABLES'). Known values
+         are: "IPTABLES", "IPVS", and "NFTABLES".
         :paramtype mode: str or ~azure.mgmt.containerservice.models.Mode
         :keyword ipvs_config: Holds configuration customizations for IPVS. May only be specified if
          'mode' is set to 'IPVS'.
@@ -2762,7 +2898,7 @@ class IdentityBinding(ProxyResource):
     :vartype properties: ~azure.mgmt.containerservice.models.IdentityBindingProperties
     :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
      will change when the resource is updated. Specify an if-match or if-none-match header with the
-     eTag value for a subsequent request to enable optimistic concurrency per the normal etag
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
      convention.
     :vartype e_tag: str
     """
@@ -3008,11 +3144,16 @@ class IstioComponents(_serialization.Model):
     :vartype ingress_gateways: list[~azure.mgmt.containerservice.models.IstioIngressGateway]
     :ivar egress_gateways: Istio egress gateways.
     :vartype egress_gateways: list[~azure.mgmt.containerservice.models.IstioEgressGateway]
+    :ivar proxy_redirection_mechanism: Mode of traffic redirection. Known values are:
+     "InitContainers" and "CNIChaining".
+    :vartype proxy_redirection_mechanism: str or
+     ~azure.mgmt.containerservice.models.ProxyRedirectionMechanism
     """
 
     _attribute_map = {
         "ingress_gateways": {"key": "ingressGateways", "type": "[IstioIngressGateway]"},
         "egress_gateways": {"key": "egressGateways", "type": "[IstioEgressGateway]"},
+        "proxy_redirection_mechanism": {"key": "proxyRedirectionMechanism", "type": "str"},
     }
 
     def __init__(
@@ -3020,6 +3161,7 @@ class IstioComponents(_serialization.Model):
         *,
         ingress_gateways: Optional[List["_models.IstioIngressGateway"]] = None,
         egress_gateways: Optional[List["_models.IstioEgressGateway"]] = None,
+        proxy_redirection_mechanism: Optional[Union[str, "_models.ProxyRedirectionMechanism"]] = None,
         **kwargs: Any
     ) -> None:
         """
@@ -3027,10 +3169,15 @@ class IstioComponents(_serialization.Model):
         :paramtype ingress_gateways: list[~azure.mgmt.containerservice.models.IstioIngressGateway]
         :keyword egress_gateways: Istio egress gateways.
         :paramtype egress_gateways: list[~azure.mgmt.containerservice.models.IstioEgressGateway]
+        :keyword proxy_redirection_mechanism: Mode of traffic redirection. Known values are:
+         "InitContainers" and "CNIChaining".
+        :paramtype proxy_redirection_mechanism: str or
+         ~azure.mgmt.containerservice.models.ProxyRedirectionMechanism
         """
         super().__init__(**kwargs)
         self.ingress_gateways = ingress_gateways
         self.egress_gateways = egress_gateways
+        self.proxy_redirection_mechanism = proxy_redirection_mechanism
 
 
 class IstioEgressGateway(_serialization.Model):
@@ -3230,6 +3377,365 @@ class IstioServiceMesh(_serialization.Model):
         self.components = components
         self.certificate_authority = certificate_authority
         self.revisions = revisions
+
+
+class JWTAuthenticator(ProxyResource):
+    """Configuration for JWT authenticator in the managed cluster.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar id: Fully qualified resource ID for the resource. E.g.
+     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}".
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.containerservice.models.SystemData
+    :ivar properties: The properties of JWTAuthenticator. For details on how to configure the
+     properties of a JWT authenticator, please refer to the Kubernetes documentation:
+     https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration.
+     Please note that not all fields available in the Kubernetes documentation are supported by AKS.
+     For troubleshooting, please see https://aka.ms/aks-external-issuers-docs. Required.
+    :vartype properties: ~azure.mgmt.containerservice.models.JWTAuthenticatorProperties
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "system_data": {"readonly": True},
+        "properties": {"required": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "properties": {"key": "properties", "type": "JWTAuthenticatorProperties"},
+    }
+
+    def __init__(self, *, properties: "_models.JWTAuthenticatorProperties", **kwargs: Any) -> None:
+        """
+        :keyword properties: The properties of JWTAuthenticator. For details on how to configure the
+         properties of a JWT authenticator, please refer to the Kubernetes documentation:
+         https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration.
+         Please note that not all fields available in the Kubernetes documentation are supported by AKS.
+         For troubleshooting, please see https://aka.ms/aks-external-issuers-docs. Required.
+        :paramtype properties: ~azure.mgmt.containerservice.models.JWTAuthenticatorProperties
+        """
+        super().__init__(**kwargs)
+        self.properties = properties
+
+
+class JWTAuthenticatorClaimMappingExpression(_serialization.Model):
+    """The claim mapping expression for JWTAuthenticator.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar expression: The CEL expression used to access token claims. Required.
+    :vartype expression: str
+    """
+
+    _validation = {
+        "expression": {"required": True},
+    }
+
+    _attribute_map = {
+        "expression": {"key": "expression", "type": "str"},
+    }
+
+    def __init__(self, *, expression: str, **kwargs: Any) -> None:
+        """
+        :keyword expression: The CEL expression used to access token claims. Required.
+        :paramtype expression: str
+        """
+        super().__init__(**kwargs)
+        self.expression = expression
+
+
+class JWTAuthenticatorClaimMappings(_serialization.Model):
+    """The claim mappings for JWTAuthenticator.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar username: The expression to extract username attribute from the token claims. Required.
+    :vartype username: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappingExpression
+    :ivar groups: The expression to extract groups attribute from the token claims. When not
+     provided, no groups are extracted from the token claims.
+    :vartype groups: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappingExpression
+    :ivar uid: The expression to extract uid attribute from the token claims. When not provided, no
+     uid is extracted from the token claims.
+    :vartype uid: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappingExpression
+    :ivar extra: The expression to extract extra attribute from the token claims. When not
+     provided, no extra attributes are extracted from the token claims.
+    :vartype extra:
+     list[~azure.mgmt.containerservice.models.JWTAuthenticatorExtraClaimMappingExpression]
+    """
+
+    _validation = {
+        "username": {"required": True},
+    }
+
+    _attribute_map = {
+        "username": {"key": "username", "type": "JWTAuthenticatorClaimMappingExpression"},
+        "groups": {"key": "groups", "type": "JWTAuthenticatorClaimMappingExpression"},
+        "uid": {"key": "uid", "type": "JWTAuthenticatorClaimMappingExpression"},
+        "extra": {"key": "extra", "type": "[JWTAuthenticatorExtraClaimMappingExpression]"},
+    }
+
+    def __init__(
+        self,
+        *,
+        username: "_models.JWTAuthenticatorClaimMappingExpression",
+        groups: Optional["_models.JWTAuthenticatorClaimMappingExpression"] = None,
+        uid: Optional["_models.JWTAuthenticatorClaimMappingExpression"] = None,
+        extra: Optional[List["_models.JWTAuthenticatorExtraClaimMappingExpression"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword username: The expression to extract username attribute from the token claims.
+         Required.
+        :paramtype username: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappingExpression
+        :keyword groups: The expression to extract groups attribute from the token claims. When not
+         provided, no groups are extracted from the token claims.
+        :paramtype groups: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappingExpression
+        :keyword uid: The expression to extract uid attribute from the token claims. When not provided,
+         no uid is extracted from the token claims.
+        :paramtype uid: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappingExpression
+        :keyword extra: The expression to extract extra attribute from the token claims. When not
+         provided, no extra attributes are extracted from the token claims.
+        :paramtype extra:
+         list[~azure.mgmt.containerservice.models.JWTAuthenticatorExtraClaimMappingExpression]
+        """
+        super().__init__(**kwargs)
+        self.username = username
+        self.groups = groups
+        self.uid = uid
+        self.extra = extra
+
+
+class JWTAuthenticatorExtraClaimMappingExpression(_serialization.Model):  # pylint: disable=name-too-long
+    """The extra claim mapping expression for JWTAuthenticator.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar key: The key of the extra attribute. Required.
+    :vartype key: str
+    :ivar value_expression: The CEL expression used to extract the value of the extra attribute.
+     Required.
+    :vartype value_expression: str
+    """
+
+    _validation = {
+        "key": {"required": True},
+        "value_expression": {"required": True},
+    }
+
+    _attribute_map = {
+        "key": {"key": "key", "type": "str"},
+        "value_expression": {"key": "valueExpression", "type": "str"},
+    }
+
+    def __init__(self, *, key: str, value_expression: str, **kwargs: Any) -> None:
+        """
+        :keyword key: The key of the extra attribute. Required.
+        :paramtype key: str
+        :keyword value_expression: The CEL expression used to extract the value of the extra attribute.
+         Required.
+        :paramtype value_expression: str
+        """
+        super().__init__(**kwargs)
+        self.key = key
+        self.value_expression = value_expression
+
+
+class JWTAuthenticatorIssuer(_serialization.Model):
+    """The OIDC issuer details for JWTAuthenticator.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar url: The issuer URL. The URL must begin with the scheme https and cannot contain a query
+     string or fragment. This must match the "iss" claim in the presented JWT, and the issuer
+     returned from discovery. Required.
+    :vartype url: str
+    :ivar audiences: The set of acceptable audiences the JWT must be issued to. At least one is
+     required. When multiple is set, AudienceMatchPolicy is used in API Server configuration.
+     Required.
+    :vartype audiences: list[str]
+    """
+
+    _validation = {
+        "url": {"required": True},
+        "audiences": {"required": True, "min_items": 1},
+    }
+
+    _attribute_map = {
+        "url": {"key": "url", "type": "str"},
+        "audiences": {"key": "audiences", "type": "[str]"},
+    }
+
+    def __init__(self, *, url: str, audiences: List[str], **kwargs: Any) -> None:
+        """
+        :keyword url: The issuer URL. The URL must begin with the scheme https and cannot contain a
+         query string or fragment. This must match the "iss" claim in the presented JWT, and the issuer
+         returned from discovery. Required.
+        :paramtype url: str
+        :keyword audiences: The set of acceptable audiences the JWT must be issued to. At least one is
+         required. When multiple is set, AudienceMatchPolicy is used in API Server configuration.
+         Required.
+        :paramtype audiences: list[str]
+        """
+        super().__init__(**kwargs)
+        self.url = url
+        self.audiences = audiences
+
+
+class JWTAuthenticatorListResult(_serialization.Model):
+    """The response from the List JWT authenticator operation.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar value: The list of JWT authenticators. Required.
+    :vartype value: list[~azure.mgmt.containerservice.models.JWTAuthenticator]
+    :ivar next_link: The URL to get the next set of JWT authenticator results.
+    :vartype next_link: str
+    """
+
+    _validation = {
+        "value": {"required": True},
+        "next_link": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[JWTAuthenticator]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(self, *, value: List["_models.JWTAuthenticator"], **kwargs: Any) -> None:
+        """
+        :keyword value: The list of JWT authenticators. Required.
+        :paramtype value: list[~azure.mgmt.containerservice.models.JWTAuthenticator]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+        self.next_link: Optional[str] = None
+
+
+class JWTAuthenticatorProperties(_serialization.Model):
+    """The properties of JWTAuthenticator. For details on how to configure the properties of a JWT
+    authenticator, please refer to the Kubernetes documentation:
+    https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration.
+    Please note that not all fields available in the Kubernetes documentation are supported by AKS.
+    For troubleshooting, please see https://aka.ms/aks-external-issuers-docs.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar provisioning_state: The current provisioning state of the JWT authenticator. Known values
+     are: "Succeeded", "Failed", "Canceled", "Creating", "Updating", and "Deleting".
+    :vartype provisioning_state: str or
+     ~azure.mgmt.containerservice.models.JWTAuthenticatorProvisioningState
+    :ivar issuer: The JWT OIDC issuer details. Required.
+    :vartype issuer: ~azure.mgmt.containerservice.models.JWTAuthenticatorIssuer
+    :ivar claim_validation_rules: The rules that are applied to validate token claims to
+     authenticate users. All the expressions must evaluate to true for validation to succeed.
+    :vartype claim_validation_rules:
+     list[~azure.mgmt.containerservice.models.JWTAuthenticatorValidationRule]
+    :ivar claim_mappings: The mappings that define how user attributes are extracted from the token
+     claims. Required.
+    :vartype claim_mappings: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappings
+    :ivar user_validation_rules: The rules that are applied to the mapped user before completing
+     authentication. All the expressions must evaluate to true for validation to succeed.
+    :vartype user_validation_rules:
+     list[~azure.mgmt.containerservice.models.JWTAuthenticatorValidationRule]
+    """
+
+    _validation = {
+        "provisioning_state": {"readonly": True},
+        "issuer": {"required": True},
+        "claim_mappings": {"required": True},
+    }
+
+    _attribute_map = {
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "issuer": {"key": "issuer", "type": "JWTAuthenticatorIssuer"},
+        "claim_validation_rules": {"key": "claimValidationRules", "type": "[JWTAuthenticatorValidationRule]"},
+        "claim_mappings": {"key": "claimMappings", "type": "JWTAuthenticatorClaimMappings"},
+        "user_validation_rules": {"key": "userValidationRules", "type": "[JWTAuthenticatorValidationRule]"},
+    }
+
+    def __init__(
+        self,
+        *,
+        issuer: "_models.JWTAuthenticatorIssuer",
+        claim_mappings: "_models.JWTAuthenticatorClaimMappings",
+        claim_validation_rules: Optional[List["_models.JWTAuthenticatorValidationRule"]] = None,
+        user_validation_rules: Optional[List["_models.JWTAuthenticatorValidationRule"]] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword issuer: The JWT OIDC issuer details. Required.
+        :paramtype issuer: ~azure.mgmt.containerservice.models.JWTAuthenticatorIssuer
+        :keyword claim_validation_rules: The rules that are applied to validate token claims to
+         authenticate users. All the expressions must evaluate to true for validation to succeed.
+        :paramtype claim_validation_rules:
+         list[~azure.mgmt.containerservice.models.JWTAuthenticatorValidationRule]
+        :keyword claim_mappings: The mappings that define how user attributes are extracted from the
+         token claims. Required.
+        :paramtype claim_mappings: ~azure.mgmt.containerservice.models.JWTAuthenticatorClaimMappings
+        :keyword user_validation_rules: The rules that are applied to the mapped user before completing
+         authentication. All the expressions must evaluate to true for validation to succeed.
+        :paramtype user_validation_rules:
+         list[~azure.mgmt.containerservice.models.JWTAuthenticatorValidationRule]
+        """
+        super().__init__(**kwargs)
+        self.provisioning_state: Optional[Union[str, "_models.JWTAuthenticatorProvisioningState"]] = None
+        self.issuer = issuer
+        self.claim_validation_rules = claim_validation_rules
+        self.claim_mappings = claim_mappings
+        self.user_validation_rules = user_validation_rules
+
+
+class JWTAuthenticatorValidationRule(_serialization.Model):
+    """The validation rule for JWTAuthenticator.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar expression: The CEL expression used to validate the claim or attribute. Required.
+    :vartype expression: str
+    :ivar message: The validation error message.
+    :vartype message: str
+    """
+
+    _validation = {
+        "expression": {"required": True},
+    }
+
+    _attribute_map = {
+        "expression": {"key": "expression", "type": "str"},
+        "message": {"key": "message", "type": "str"},
+    }
+
+    def __init__(self, *, expression: str, message: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword expression: The CEL expression used to validate the claim or attribute. Required.
+        :paramtype expression: str
+        :keyword message: The validation error message.
+        :paramtype message: str
+        """
+        super().__init__(**kwargs)
+        self.expression = expression
+        self.message = message
 
 
 class KubeletConfig(_serialization.Model):
@@ -4116,7 +4622,7 @@ class MachineKubernetesProfile(_serialization.Model):
     :ivar node_name: The node name in the Kubernetes cluster.
     :vartype node_name: str
     :ivar workload_runtime: Determines the type of workload a node can run. Known values are:
-     "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+     "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
     :vartype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
     :ivar artifact_streaming_profile: Configuration for using artifact streaming on AKS.
     :vartype artifact_streaming_profile:
@@ -4180,7 +4686,7 @@ class MachineKubernetesProfile(_serialization.Model):
         :keyword max_pods: The maximum number of pods that can run on a node.
         :paramtype max_pods: int
         :keyword workload_runtime: Determines the type of workload a node can run. Known values are:
-         "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+         "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
         :paramtype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
         :keyword artifact_streaming_profile: Configuration for using artifact streaming on AKS.
         :paramtype artifact_streaming_profile:
@@ -4326,8 +4832,8 @@ class MachineOSProfile(_serialization.Model):
     :ivar os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
      Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
      changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-     "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-     "Ubuntu2204", and "Ubuntu2404".
+     "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+     "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
     :vartype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
     :ivar os_disk_size_gb: OS Disk Size in GB to be used to specify the disk size for every machine
      in the master/agent pool. If you specify 0, it will apply the default osDisk size according to
@@ -4380,8 +4886,8 @@ class MachineOSProfile(_serialization.Model):
         :keyword os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
          Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
          changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-         "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-         "Ubuntu2204", and "Ubuntu2404".
+         "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+         "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
         :paramtype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
         :keyword os_disk_size_gb: OS Disk Size in GB to be used to specify the disk size for every
          machine in the master/agent pool. If you specify 0, it will apply the default osDisk size
@@ -4469,7 +4975,7 @@ class MachineProperties(_serialization.Model):
      "Gateway", "ManagedSystem", and "Machines".
     :vartype mode: str or ~azure.mgmt.containerservice.models.AgentPoolMode
     :ivar security: The security settings of the machine.
-    :vartype security: ~azure.mgmt.containerservice.models.AgentPoolSecurityProfile
+    :vartype security: ~azure.mgmt.containerservice.models.MachineSecurityProfile
     :ivar priority: The priority for the machine. If not specified, the default is 'Regular'. Known
      values are: "Spot" and "Regular".
     :vartype priority: str or ~azure.mgmt.containerservice.models.ScaleSetPriority
@@ -4481,7 +4987,7 @@ class MachineProperties(_serialization.Model):
     :vartype tags: dict[str, str]
     :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
      will change when the resource is updated. Specify an if-match or if-none-match header with the
-     eTag value for a subsequent request to enable optimistic concurrency per the normal etag
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
      convention.
     :vartype e_tag: str
     :ivar status: Contains read-only information about the machine.
@@ -4490,7 +4996,6 @@ class MachineProperties(_serialization.Model):
 
     _validation = {
         "resource_id": {"readonly": True},
-        "node_image_version": {"readonly": True},
         "provisioning_state": {"readonly": True},
         "e_tag": {"readonly": True},
         "status": {"readonly": True},
@@ -4503,7 +5008,7 @@ class MachineProperties(_serialization.Model):
         "operating_system": {"key": "operatingSystem", "type": "MachineOSProfile"},
         "kubernetes": {"key": "kubernetes", "type": "MachineKubernetesProfile"},
         "mode": {"key": "mode", "type": "str"},
-        "security": {"key": "security", "type": "AgentPoolSecurityProfile"},
+        "security": {"key": "security", "type": "MachineSecurityProfile"},
         "priority": {"key": "priority", "type": "str"},
         "node_image_version": {"key": "nodeImageVersion", "type": "str"},
         "provisioning_state": {"key": "provisioningState", "type": "str"},
@@ -4520,8 +5025,9 @@ class MachineProperties(_serialization.Model):
         operating_system: Optional["_models.MachineOSProfile"] = None,
         kubernetes: Optional["_models.MachineKubernetesProfile"] = None,
         mode: Optional[Union[str, "_models.AgentPoolMode"]] = None,
-        security: Optional["_models.AgentPoolSecurityProfile"] = None,
+        security: Optional["_models.MachineSecurityProfile"] = None,
         priority: Union[str, "_models.ScaleSetPriority"] = "Regular",
+        node_image_version: Optional[str] = None,
         tags: Optional[Dict[str, str]] = None,
         **kwargs: Any
     ) -> None:
@@ -4538,10 +5044,12 @@ class MachineProperties(_serialization.Model):
          "User", "Gateway", "ManagedSystem", and "Machines".
         :paramtype mode: str or ~azure.mgmt.containerservice.models.AgentPoolMode
         :keyword security: The security settings of the machine.
-        :paramtype security: ~azure.mgmt.containerservice.models.AgentPoolSecurityProfile
+        :paramtype security: ~azure.mgmt.containerservice.models.MachineSecurityProfile
         :keyword priority: The priority for the machine. If not specified, the default is 'Regular'.
          Known values are: "Spot" and "Regular".
         :paramtype priority: str or ~azure.mgmt.containerservice.models.ScaleSetPriority
+        :keyword node_image_version: The version of node image.
+        :paramtype node_image_version: str
         :keyword tags: The tags to be persisted on the machine.
         :paramtype tags: dict[str, str]
         """
@@ -4554,11 +5062,71 @@ class MachineProperties(_serialization.Model):
         self.mode = mode
         self.security = security
         self.priority = priority
-        self.node_image_version: Optional[str] = None
+        self.node_image_version = node_image_version
         self.provisioning_state: Optional[str] = None
         self.tags = tags
         self.e_tag: Optional[str] = None
         self.status: Optional["_models.MachineStatus"] = None
+
+
+class MachineSecurityProfile(_serialization.Model):
+    """The security settings of the machine.
+
+    :ivar ssh_access: SSH access method of an agent pool. Known values are: "LocalUser",
+     "Disabled", and "EntraId".
+    :vartype ssh_access: str or ~azure.mgmt.containerservice.models.AgentPoolSSHAccess
+    :ivar enable_vtpm: vTPM is a Trusted Launch feature for configuring a dedicated secure vault
+     for keys and measurements held locally on the node. For more details, see
+     aka.ms/aks/trustedlaunch. If not specified, the default is false.
+    :vartype enable_vtpm: bool
+    :ivar enable_secure_boot: Secure Boot is a feature of Trusted Launch which ensures that only
+     signed operating systems and drivers can boot. For more details, see aka.ms/aks/trustedlaunch.
+     If not specified, the default is false.
+    :vartype enable_secure_boot: bool
+    :ivar enable_encryption_at_host: Whether to enable host based OS and data drive encryption.
+     This is only supported on certain VM sizes and in certain Azure regions. For more information,
+     see: https://docs.microsoft.com/azure/aks/enable-host-encryption.
+    :vartype enable_encryption_at_host: bool
+    """
+
+    _attribute_map = {
+        "ssh_access": {"key": "sshAccess", "type": "str"},
+        "enable_vtpm": {"key": "enableVTPM", "type": "bool"},
+        "enable_secure_boot": {"key": "enableSecureBoot", "type": "bool"},
+        "enable_encryption_at_host": {"key": "enableEncryptionAtHost", "type": "bool"},
+    }
+
+    def __init__(
+        self,
+        *,
+        ssh_access: Optional[Union[str, "_models.AgentPoolSSHAccess"]] = None,
+        enable_vtpm: Optional[bool] = None,
+        enable_secure_boot: Optional[bool] = None,
+        enable_encryption_at_host: Optional[bool] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword ssh_access: SSH access method of an agent pool. Known values are: "LocalUser",
+         "Disabled", and "EntraId".
+        :paramtype ssh_access: str or ~azure.mgmt.containerservice.models.AgentPoolSSHAccess
+        :keyword enable_vtpm: vTPM is a Trusted Launch feature for configuring a dedicated secure vault
+         for keys and measurements held locally on the node. For more details, see
+         aka.ms/aks/trustedlaunch. If not specified, the default is false.
+        :paramtype enable_vtpm: bool
+        :keyword enable_secure_boot: Secure Boot is a feature of Trusted Launch which ensures that only
+         signed operating systems and drivers can boot. For more details, see aka.ms/aks/trustedlaunch.
+         If not specified, the default is false.
+        :paramtype enable_secure_boot: bool
+        :keyword enable_encryption_at_host: Whether to enable host based OS and data drive encryption.
+         This is only supported on certain VM sizes and in certain Azure regions. For more information,
+         see: https://docs.microsoft.com/azure/aks/enable-host-encryption.
+        :paramtype enable_encryption_at_host: bool
+        """
+        super().__init__(**kwargs)
+        self.ssh_access = ssh_access
+        self.enable_vtpm = enable_vtpm
+        self.enable_secure_boot = enable_secure_boot
+        self.enable_encryption_at_host = enable_encryption_at_host
 
 
 class MachineStatus(_serialization.Model):
@@ -4568,7 +5136,7 @@ class MachineStatus(_serialization.Model):
 
     :ivar provisioning_error: The error details information of the machine. Preserves the detailed
      info of failure. If there was no error, this field is omitted.
-    :vartype provisioning_error: ~azure.mgmt.containerservice.models.CloudErrorBody
+    :vartype provisioning_error: ~azure.mgmt.containerservice.models.ErrorDetail
     :ivar creation_timestamp: Specifies the time at which the machine was created.
     :vartype creation_timestamp: ~datetime.datetime
     :ivar drift_action: The drift action of the machine. Indicates whether a machine has deviated
@@ -4592,7 +5160,7 @@ class MachineStatus(_serialization.Model):
     }
 
     _attribute_map = {
-        "provisioning_error": {"key": "provisioningError", "type": "CloudErrorBody"},
+        "provisioning_error": {"key": "provisioningError", "type": "ErrorDetail"},
         "creation_timestamp": {"key": "creationTimestamp", "type": "iso-8601"},
         "drift_action": {"key": "driftAction", "type": "str"},
         "drift_reason": {"key": "driftReason", "type": "str"},
@@ -4602,7 +5170,7 @@ class MachineStatus(_serialization.Model):
     def __init__(self, **kwargs: Any) -> None:
         """ """
         super().__init__(**kwargs)
-        self.provisioning_error: Optional["_models.CloudErrorBody"] = None
+        self.provisioning_error: Optional["_models.ErrorDetail"] = None
         self.creation_timestamp: Optional[datetime.datetime] = None
         self.drift_action: Optional[Union[str, "_models.DriftAction"]] = None
         self.drift_reason: Optional[str] = None
@@ -4870,7 +5438,7 @@ class ManagedCluster(TrackedResource):
     :vartype location: str
     :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
      will change when the resource is updated. Specify an if-match or if-none-match header with the
-     eTag value for a subsequent request to enable optimistic concurrency per the normal etag
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
      convention.
     :vartype e_tag: str
     :ivar sku: The managed cluster SKU.
@@ -5019,6 +5587,10 @@ class ManagedCluster(TrackedResource):
     :vartype bootstrap_profile: ~azure.mgmt.containerservice.models.ManagedClusterBootstrapProfile
     :ivar scheduler_profile: Profile of the pod scheduler configuration.
     :vartype scheduler_profile: ~azure.mgmt.containerservice.models.SchedulerProfile
+    :ivar hosted_system_profile: Settings for hosted system addons. For more information, see
+     https://aka.ms/aks/automatic/systemcomponents.
+    :vartype hosted_system_profile:
+     ~azure.mgmt.containerservice.models.ManagedClusterHostedSystemProfile
     :ivar status: Contains read-only information about the Managed Cluster.
     :vartype status: ~azure.mgmt.containerservice.models.ManagedClusterStatus
     """
@@ -5120,6 +5692,7 @@ class ManagedCluster(TrackedResource):
         },
         "bootstrap_profile": {"key": "properties.bootstrapProfile", "type": "ManagedClusterBootstrapProfile"},
         "scheduler_profile": {"key": "properties.schedulerProfile", "type": "SchedulerProfile"},
+        "hosted_system_profile": {"key": "properties.hostedSystemProfile", "type": "ManagedClusterHostedSystemProfile"},
         "status": {"key": "properties.status", "type": "ManagedClusterStatus"},
     }
 
@@ -5171,6 +5744,7 @@ class ManagedCluster(TrackedResource):
         node_provisioning_profile: Optional["_models.ManagedClusterNodeProvisioningProfile"] = None,
         bootstrap_profile: Optional["_models.ManagedClusterBootstrapProfile"] = None,
         scheduler_profile: Optional["_models.SchedulerProfile"] = None,
+        hosted_system_profile: Optional["_models.ManagedClusterHostedSystemProfile"] = None,
         status: Optional["_models.ManagedClusterStatus"] = None,
         **kwargs: Any
     ) -> None:
@@ -5309,6 +5883,10 @@ class ManagedCluster(TrackedResource):
          ~azure.mgmt.containerservice.models.ManagedClusterBootstrapProfile
         :keyword scheduler_profile: Profile of the pod scheduler configuration.
         :paramtype scheduler_profile: ~azure.mgmt.containerservice.models.SchedulerProfile
+        :keyword hosted_system_profile: Settings for hosted system addons. For more information, see
+         https://aka.ms/aks/automatic/systemcomponents.
+        :paramtype hosted_system_profile:
+         ~azure.mgmt.containerservice.models.ManagedClusterHostedSystemProfile
         :keyword status: Contains read-only information about the Managed Cluster.
         :paramtype status: ~azure.mgmt.containerservice.models.ManagedClusterStatus
         """
@@ -5365,6 +5943,7 @@ class ManagedCluster(TrackedResource):
         self.node_provisioning_profile = node_provisioning_profile
         self.bootstrap_profile = bootstrap_profile
         self.scheduler_profile = scheduler_profile
+        self.hosted_system_profile = hosted_system_profile
         self.status = status
 
 
@@ -5607,7 +6186,7 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
 
     :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
      will change when the resource is updated. Specify an if-match or if-none-match header with the
-     eTag value for a subsequent request to enable optimistic concurrency per the normal etag
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
      convention.
     :vartype e_tag: str
     :ivar count: Number of agents (VMs) to host docker containers. Allowed values must be in the
@@ -5633,7 +6212,7 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
      root, and Kubelet ephemeral storage. Known values are: "OS" and "Temporary".
     :vartype kubelet_disk_type: str or ~azure.mgmt.containerservice.models.KubeletDiskType
     :ivar workload_runtime: Determines the type of workload a node can run. Known values are:
-     "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+     "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
     :vartype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
     :ivar message_of_the_day: Message of the day for Linux nodes, base64-encoded. A base64-encoded
      string which will be written to /etc/motd after decoding. This allows customization of the
@@ -5663,8 +6242,8 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
     :ivar os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
      Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
      changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-     "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-     "Ubuntu2204", and "Ubuntu2404".
+     "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+     "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
     :vartype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
     :ivar max_count: The maximum number of nodes for auto-scaling.
     :vartype max_count: int
@@ -5702,8 +6281,16 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
     :vartype current_orchestrator_version: str
     :ivar node_image_version: The version of node image.
     :vartype node_image_version: str
-    :ivar upgrade_settings: Settings for upgrading the agentpool.
+    :ivar upgrade_strategy: Defines the upgrade strategy for the agent pool. The default is
+     Rolling. Known values are: "Rolling" and "BlueGreen".
+    :vartype upgrade_strategy: str or ~azure.mgmt.containerservice.models.UpgradeStrategy
+    :ivar upgrade_settings: Settings for upgrading the agentpool. Applies when upgrade strategy is
+     set to Rolling.
     :vartype upgrade_settings: ~azure.mgmt.containerservice.models.AgentPoolUpgradeSettings
+    :ivar upgrade_settings_blue_green: Settings for Blue-Green upgrade on the agentpool. Applies
+     when upgrade strategy is set to BlueGreen.
+    :vartype upgrade_settings_blue_green:
+     ~azure.mgmt.containerservice.models.AgentPoolBlueGreenUpgradeSettings
     :ivar provisioning_state: The current deployment or provisioning state.
     :vartype provisioning_state: str
     :ivar power_state: Whether the Agent Pool is running or stopped. When an Agent Pool is first
@@ -5721,11 +6308,6 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
      <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#assign-a-public-ip-per-node-for-your-node-pools>`_.
      The default is false.
     :vartype enable_node_public_ip: bool
-    :ivar enable_custom_ca_trust: Whether to enable Custom CA Trust feature. When set to true, AKS
-     adds a label to the node indicating that the feature is enabled and deploys a daemonset along
-     with host services to sync custom certificate authorities from user-provided list of base64
-     encoded certificates into node trust stores. Defaults to false.
-    :vartype enable_custom_ca_trust: bool
     :ivar node_public_ip_prefix_id: The public IP prefix ID which VM nodes should use IPs from.
      This is of the form:
      /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}.
@@ -5816,13 +6398,16 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
      LocalDNS helps improve performance and reliability of DNS resolution in an AKS cluster. For
      more details see aka.ms/aks/localdns.
     :vartype local_dns_profile: ~azure.mgmt.containerservice.models.LocalDNSProfile
+    :ivar node_customization_profile: Settings to determine the node customization used to
+     provision nodes in a pool.
+    :vartype node_customization_profile:
+     ~azure.mgmt.containerservice.models.NodeCustomizationProfile
     """
 
     _validation = {
         "e_tag": {"readonly": True},
         "os_disk_size_gb": {"maximum": 2048, "minimum": 0},
         "current_orchestrator_version": {"readonly": True},
-        "node_image_version": {"readonly": True},
         "provisioning_state": {"readonly": True},
     }
 
@@ -5850,12 +6435,13 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
         "orchestrator_version": {"key": "orchestratorVersion", "type": "str"},
         "current_orchestrator_version": {"key": "currentOrchestratorVersion", "type": "str"},
         "node_image_version": {"key": "nodeImageVersion", "type": "str"},
+        "upgrade_strategy": {"key": "upgradeStrategy", "type": "str"},
         "upgrade_settings": {"key": "upgradeSettings", "type": "AgentPoolUpgradeSettings"},
+        "upgrade_settings_blue_green": {"key": "upgradeSettingsBlueGreen", "type": "AgentPoolBlueGreenUpgradeSettings"},
         "provisioning_state": {"key": "provisioningState", "type": "str"},
         "power_state": {"key": "powerState", "type": "PowerState"},
         "availability_zones": {"key": "availabilityZones", "type": "[str]"},
         "enable_node_public_ip": {"key": "enableNodePublicIP", "type": "bool"},
-        "enable_custom_ca_trust": {"key": "enableCustomCATrust", "type": "bool"},
         "node_public_ip_prefix_id": {"key": "nodePublicIPPrefixID", "type": "str"},
         "scale_set_priority": {"key": "scaleSetPriority", "type": "str"},
         "scale_set_eviction_policy": {"key": "scaleSetEvictionPolicy", "type": "str"},
@@ -5884,6 +6470,7 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
         "gateway_profile": {"key": "gatewayProfile", "type": "AgentPoolGatewayProfile"},
         "status": {"key": "status", "type": "AgentPoolStatus"},
         "local_dns_profile": {"key": "localDNSProfile", "type": "LocalDNSProfile"},
+        "node_customization_profile": {"key": "nodeCustomizationProfile", "type": "NodeCustomizationProfile"},
     }
 
     def __init__(  # pylint: disable=too-many-locals
@@ -5909,11 +6496,13 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
         type: Optional[Union[str, "_models.AgentPoolType"]] = None,
         mode: Optional[Union[str, "_models.AgentPoolMode"]] = None,
         orchestrator_version: Optional[str] = None,
+        node_image_version: Optional[str] = None,
+        upgrade_strategy: Optional[Union[str, "_models.UpgradeStrategy"]] = None,
         upgrade_settings: Optional["_models.AgentPoolUpgradeSettings"] = None,
+        upgrade_settings_blue_green: Optional["_models.AgentPoolBlueGreenUpgradeSettings"] = None,
         power_state: Optional["_models.PowerState"] = None,
         availability_zones: Optional[List[str]] = None,
         enable_node_public_ip: Optional[bool] = None,
-        enable_custom_ca_trust: Optional[bool] = None,
         node_public_ip_prefix_id: Optional[str] = None,
         scale_set_priority: Union[str, "_models.ScaleSetPriority"] = "Regular",
         scale_set_eviction_policy: Union[str, "_models.ScaleSetEvictionPolicy"] = "Delete",
@@ -5942,6 +6531,7 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
         gateway_profile: Optional["_models.AgentPoolGatewayProfile"] = None,
         status: Optional["_models.AgentPoolStatus"] = None,
         local_dns_profile: Optional["_models.LocalDNSProfile"] = None,
+        node_customization_profile: Optional["_models.NodeCustomizationProfile"] = None,
         **kwargs: Any
     ) -> None:
         """
@@ -5969,7 +6559,7 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
          data root, and Kubelet ephemeral storage. Known values are: "OS" and "Temporary".
         :paramtype kubelet_disk_type: str or ~azure.mgmt.containerservice.models.KubeletDiskType
         :keyword workload_runtime: Determines the type of workload a node can run. Known values are:
-         "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+         "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
         :paramtype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
         :keyword message_of_the_day: Message of the day for Linux nodes, base64-encoded. A
          base64-encoded string which will be written to /etc/motd after decoding. This allows
@@ -6000,8 +6590,8 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
         :keyword os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
          Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
          changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-         "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-         "Ubuntu2204", and "Ubuntu2404".
+         "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+         "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
         :paramtype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
         :keyword max_count: The maximum number of nodes for auto-scaling.
         :paramtype max_count: int
@@ -6032,8 +6622,18 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
          information see `upgrading a node pool
          <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#upgrade-a-node-pool>`_.
         :paramtype orchestrator_version: str
-        :keyword upgrade_settings: Settings for upgrading the agentpool.
+        :keyword node_image_version: The version of node image.
+        :paramtype node_image_version: str
+        :keyword upgrade_strategy: Defines the upgrade strategy for the agent pool. The default is
+         Rolling. Known values are: "Rolling" and "BlueGreen".
+        :paramtype upgrade_strategy: str or ~azure.mgmt.containerservice.models.UpgradeStrategy
+        :keyword upgrade_settings: Settings for upgrading the agentpool. Applies when upgrade strategy
+         is set to Rolling.
         :paramtype upgrade_settings: ~azure.mgmt.containerservice.models.AgentPoolUpgradeSettings
+        :keyword upgrade_settings_blue_green: Settings for Blue-Green upgrade on the agentpool. Applies
+         when upgrade strategy is set to BlueGreen.
+        :paramtype upgrade_settings_blue_green:
+         ~azure.mgmt.containerservice.models.AgentPoolBlueGreenUpgradeSettings
         :keyword power_state: Whether the Agent Pool is running or stopped. When an Agent Pool is first
          created it is initially Running. The Agent Pool can be stopped by setting this field to
          Stopped. A stopped Agent Pool stops all of its VMs and does not accrue billing charges. An
@@ -6050,11 +6650,6 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
          <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#assign-a-public-ip-per-node-for-your-node-pools>`_.
          The default is false.
         :paramtype enable_node_public_ip: bool
-        :keyword enable_custom_ca_trust: Whether to enable Custom CA Trust feature. When set to true,
-         AKS adds a label to the node indicating that the feature is enabled and deploys a daemonset
-         along with host services to sync custom certificate authorities from user-provided list of
-         base64 encoded certificates into node trust stores. Defaults to false.
-        :paramtype enable_custom_ca_trust: bool
         :keyword node_public_ip_prefix_id: The public IP prefix ID which VM nodes should use IPs from.
          This is of the form:
          /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}.
@@ -6147,6 +6742,10 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
          overrides. LocalDNS helps improve performance and reliability of DNS resolution in an AKS
          cluster. For more details see aka.ms/aks/localdns.
         :paramtype local_dns_profile: ~azure.mgmt.containerservice.models.LocalDNSProfile
+        :keyword node_customization_profile: Settings to determine the node customization used to
+         provision nodes in a pool.
+        :paramtype node_customization_profile:
+         ~azure.mgmt.containerservice.models.NodeCustomizationProfile
         """
         super().__init__(**kwargs)
         self.e_tag: Optional[str] = None
@@ -6171,13 +6770,14 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
         self.mode = mode
         self.orchestrator_version = orchestrator_version
         self.current_orchestrator_version: Optional[str] = None
-        self.node_image_version: Optional[str] = None
+        self.node_image_version = node_image_version
+        self.upgrade_strategy = upgrade_strategy
         self.upgrade_settings = upgrade_settings
+        self.upgrade_settings_blue_green = upgrade_settings_blue_green
         self.provisioning_state: Optional[str] = None
         self.power_state = power_state
         self.availability_zones = availability_zones
         self.enable_node_public_ip = enable_node_public_ip
-        self.enable_custom_ca_trust = enable_custom_ca_trust
         self.node_public_ip_prefix_id = node_public_ip_prefix_id
         self.scale_set_priority = scale_set_priority
         self.scale_set_eviction_policy = scale_set_eviction_policy
@@ -6206,6 +6806,7 @@ class ManagedClusterAgentPoolProfileProperties(_serialization.Model):
         self.gateway_profile = gateway_profile
         self.status = status
         self.local_dns_profile = local_dns_profile
+        self.node_customization_profile = node_customization_profile
 
 
 class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
@@ -6217,7 +6818,7 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
 
     :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
      will change when the resource is updated. Specify an if-match or if-none-match header with the
-     eTag value for a subsequent request to enable optimistic concurrency per the normal etag
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
      convention.
     :vartype e_tag: str
     :ivar count: Number of agents (VMs) to host docker containers. Allowed values must be in the
@@ -6243,7 +6844,7 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
      root, and Kubelet ephemeral storage. Known values are: "OS" and "Temporary".
     :vartype kubelet_disk_type: str or ~azure.mgmt.containerservice.models.KubeletDiskType
     :ivar workload_runtime: Determines the type of workload a node can run. Known values are:
-     "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+     "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
     :vartype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
     :ivar message_of_the_day: Message of the day for Linux nodes, base64-encoded. A base64-encoded
      string which will be written to /etc/motd after decoding. This allows customization of the
@@ -6273,8 +6874,8 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
     :ivar os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
      Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
      changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-     "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-     "Ubuntu2204", and "Ubuntu2404".
+     "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+     "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
     :vartype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
     :ivar max_count: The maximum number of nodes for auto-scaling.
     :vartype max_count: int
@@ -6312,8 +6913,16 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
     :vartype current_orchestrator_version: str
     :ivar node_image_version: The version of node image.
     :vartype node_image_version: str
-    :ivar upgrade_settings: Settings for upgrading the agentpool.
+    :ivar upgrade_strategy: Defines the upgrade strategy for the agent pool. The default is
+     Rolling. Known values are: "Rolling" and "BlueGreen".
+    :vartype upgrade_strategy: str or ~azure.mgmt.containerservice.models.UpgradeStrategy
+    :ivar upgrade_settings: Settings for upgrading the agentpool. Applies when upgrade strategy is
+     set to Rolling.
     :vartype upgrade_settings: ~azure.mgmt.containerservice.models.AgentPoolUpgradeSettings
+    :ivar upgrade_settings_blue_green: Settings for Blue-Green upgrade on the agentpool. Applies
+     when upgrade strategy is set to BlueGreen.
+    :vartype upgrade_settings_blue_green:
+     ~azure.mgmt.containerservice.models.AgentPoolBlueGreenUpgradeSettings
     :ivar provisioning_state: The current deployment or provisioning state.
     :vartype provisioning_state: str
     :ivar power_state: Whether the Agent Pool is running or stopped. When an Agent Pool is first
@@ -6331,11 +6940,6 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
      <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#assign-a-public-ip-per-node-for-your-node-pools>`_.
      The default is false.
     :vartype enable_node_public_ip: bool
-    :ivar enable_custom_ca_trust: Whether to enable Custom CA Trust feature. When set to true, AKS
-     adds a label to the node indicating that the feature is enabled and deploys a daemonset along
-     with host services to sync custom certificate authorities from user-provided list of base64
-     encoded certificates into node trust stores. Defaults to false.
-    :vartype enable_custom_ca_trust: bool
     :ivar node_public_ip_prefix_id: The public IP prefix ID which VM nodes should use IPs from.
      This is of the form:
      /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}.
@@ -6426,6 +7030,10 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
      LocalDNS helps improve performance and reliability of DNS resolution in an AKS cluster. For
      more details see aka.ms/aks/localdns.
     :vartype local_dns_profile: ~azure.mgmt.containerservice.models.LocalDNSProfile
+    :ivar node_customization_profile: Settings to determine the node customization used to
+     provision nodes in a pool.
+    :vartype node_customization_profile:
+     ~azure.mgmt.containerservice.models.NodeCustomizationProfile
     :ivar name: Unique name of the agent pool profile in the context of the subscription and
      resource group. Windows agent pool names must be 6 characters or less. Required.
     :vartype name: str
@@ -6435,7 +7043,6 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
         "e_tag": {"readonly": True},
         "os_disk_size_gb": {"maximum": 2048, "minimum": 0},
         "current_orchestrator_version": {"readonly": True},
-        "node_image_version": {"readonly": True},
         "provisioning_state": {"readonly": True},
         "name": {"required": True, "pattern": r"^[a-z][a-z0-9]{0,11}$"},
     }
@@ -6464,12 +7071,13 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
         "orchestrator_version": {"key": "orchestratorVersion", "type": "str"},
         "current_orchestrator_version": {"key": "currentOrchestratorVersion", "type": "str"},
         "node_image_version": {"key": "nodeImageVersion", "type": "str"},
+        "upgrade_strategy": {"key": "upgradeStrategy", "type": "str"},
         "upgrade_settings": {"key": "upgradeSettings", "type": "AgentPoolUpgradeSettings"},
+        "upgrade_settings_blue_green": {"key": "upgradeSettingsBlueGreen", "type": "AgentPoolBlueGreenUpgradeSettings"},
         "provisioning_state": {"key": "provisioningState", "type": "str"},
         "power_state": {"key": "powerState", "type": "PowerState"},
         "availability_zones": {"key": "availabilityZones", "type": "[str]"},
         "enable_node_public_ip": {"key": "enableNodePublicIP", "type": "bool"},
-        "enable_custom_ca_trust": {"key": "enableCustomCATrust", "type": "bool"},
         "node_public_ip_prefix_id": {"key": "nodePublicIPPrefixID", "type": "str"},
         "scale_set_priority": {"key": "scaleSetPriority", "type": "str"},
         "scale_set_eviction_policy": {"key": "scaleSetEvictionPolicy", "type": "str"},
@@ -6498,6 +7106,7 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
         "gateway_profile": {"key": "gatewayProfile", "type": "AgentPoolGatewayProfile"},
         "status": {"key": "status", "type": "AgentPoolStatus"},
         "local_dns_profile": {"key": "localDNSProfile", "type": "LocalDNSProfile"},
+        "node_customization_profile": {"key": "nodeCustomizationProfile", "type": "NodeCustomizationProfile"},
         "name": {"key": "name", "type": "str"},
     }
 
@@ -6525,11 +7134,13 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
         type: Optional[Union[str, "_models.AgentPoolType"]] = None,
         mode: Optional[Union[str, "_models.AgentPoolMode"]] = None,
         orchestrator_version: Optional[str] = None,
+        node_image_version: Optional[str] = None,
+        upgrade_strategy: Optional[Union[str, "_models.UpgradeStrategy"]] = None,
         upgrade_settings: Optional["_models.AgentPoolUpgradeSettings"] = None,
+        upgrade_settings_blue_green: Optional["_models.AgentPoolBlueGreenUpgradeSettings"] = None,
         power_state: Optional["_models.PowerState"] = None,
         availability_zones: Optional[List[str]] = None,
         enable_node_public_ip: Optional[bool] = None,
-        enable_custom_ca_trust: Optional[bool] = None,
         node_public_ip_prefix_id: Optional[str] = None,
         scale_set_priority: Union[str, "_models.ScaleSetPriority"] = "Regular",
         scale_set_eviction_policy: Union[str, "_models.ScaleSetEvictionPolicy"] = "Delete",
@@ -6558,6 +7169,7 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
         gateway_profile: Optional["_models.AgentPoolGatewayProfile"] = None,
         status: Optional["_models.AgentPoolStatus"] = None,
         local_dns_profile: Optional["_models.LocalDNSProfile"] = None,
+        node_customization_profile: Optional["_models.NodeCustomizationProfile"] = None,
         **kwargs: Any
     ) -> None:
         """
@@ -6585,7 +7197,7 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
          data root, and Kubelet ephemeral storage. Known values are: "OS" and "Temporary".
         :paramtype kubelet_disk_type: str or ~azure.mgmt.containerservice.models.KubeletDiskType
         :keyword workload_runtime: Determines the type of workload a node can run. Known values are:
-         "OCIContainer", "WasmWasi", and "KataMshvVmIsolation".
+         "OCIContainer", "WasmWasi", "KataMshvVmIsolation", and "KataVmIsolation".
         :paramtype workload_runtime: str or ~azure.mgmt.containerservice.models.WorkloadRuntime
         :keyword message_of_the_day: Message of the day for Linux nodes, base64-encoded. A
          base64-encoded string which will be written to /etc/motd after decoding. This allows
@@ -6616,8 +7228,8 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
         :keyword os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
          Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
          changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-         "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-         "Ubuntu2204", and "Ubuntu2404".
+         "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+         "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
         :paramtype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
         :keyword max_count: The maximum number of nodes for auto-scaling.
         :paramtype max_count: int
@@ -6648,8 +7260,18 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
          information see `upgrading a node pool
          <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#upgrade-a-node-pool>`_.
         :paramtype orchestrator_version: str
-        :keyword upgrade_settings: Settings for upgrading the agentpool.
+        :keyword node_image_version: The version of node image.
+        :paramtype node_image_version: str
+        :keyword upgrade_strategy: Defines the upgrade strategy for the agent pool. The default is
+         Rolling. Known values are: "Rolling" and "BlueGreen".
+        :paramtype upgrade_strategy: str or ~azure.mgmt.containerservice.models.UpgradeStrategy
+        :keyword upgrade_settings: Settings for upgrading the agentpool. Applies when upgrade strategy
+         is set to Rolling.
         :paramtype upgrade_settings: ~azure.mgmt.containerservice.models.AgentPoolUpgradeSettings
+        :keyword upgrade_settings_blue_green: Settings for Blue-Green upgrade on the agentpool. Applies
+         when upgrade strategy is set to BlueGreen.
+        :paramtype upgrade_settings_blue_green:
+         ~azure.mgmt.containerservice.models.AgentPoolBlueGreenUpgradeSettings
         :keyword power_state: Whether the Agent Pool is running or stopped. When an Agent Pool is first
          created it is initially Running. The Agent Pool can be stopped by setting this field to
          Stopped. A stopped Agent Pool stops all of its VMs and does not accrue billing charges. An
@@ -6666,11 +7288,6 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
          <https://docs.microsoft.com/azure/aks/use-multiple-node-pools#assign-a-public-ip-per-node-for-your-node-pools>`_.
          The default is false.
         :paramtype enable_node_public_ip: bool
-        :keyword enable_custom_ca_trust: Whether to enable Custom CA Trust feature. When set to true,
-         AKS adds a label to the node indicating that the feature is enabled and deploys a daemonset
-         along with host services to sync custom certificate authorities from user-provided list of
-         base64 encoded certificates into node trust stores. Defaults to false.
-        :paramtype enable_custom_ca_trust: bool
         :keyword node_public_ip_prefix_id: The public IP prefix ID which VM nodes should use IPs from.
          This is of the form:
          /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.Network/publicIPPrefixes/{publicIPPrefixName}.
@@ -6763,6 +7380,10 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
          overrides. LocalDNS helps improve performance and reliability of DNS resolution in an AKS
          cluster. For more details see aka.ms/aks/localdns.
         :paramtype local_dns_profile: ~azure.mgmt.containerservice.models.LocalDNSProfile
+        :keyword node_customization_profile: Settings to determine the node customization used to
+         provision nodes in a pool.
+        :paramtype node_customization_profile:
+         ~azure.mgmt.containerservice.models.NodeCustomizationProfile
         :keyword name: Unique name of the agent pool profile in the context of the subscription and
          resource group. Windows agent pool names must be 6 characters or less. Required.
         :paramtype name: str
@@ -6788,11 +7409,13 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
             type=type,
             mode=mode,
             orchestrator_version=orchestrator_version,
+            node_image_version=node_image_version,
+            upgrade_strategy=upgrade_strategy,
             upgrade_settings=upgrade_settings,
+            upgrade_settings_blue_green=upgrade_settings_blue_green,
             power_state=power_state,
             availability_zones=availability_zones,
             enable_node_public_ip=enable_node_public_ip,
-            enable_custom_ca_trust=enable_custom_ca_trust,
             node_public_ip_prefix_id=node_public_ip_prefix_id,
             scale_set_priority=scale_set_priority,
             scale_set_eviction_policy=scale_set_eviction_policy,
@@ -6821,6 +7444,7 @@ class ManagedClusterAgentPoolProfile(ManagedClusterAgentPoolProfileProperties):
             gateway_profile=gateway_profile,
             status=status,
             local_dns_profile=local_dns_profile,
+            node_customization_profile=node_customization_profile,
             **kwargs
         )
         self.name = name
@@ -7417,6 +8041,26 @@ class ManagedClusterCostAnalysis(_serialization.Model):
         self.enabled = enabled
 
 
+class ManagedClusterHostedSystemProfile(_serialization.Model):
+    """Settings for hosted system addons.
+
+    :ivar enabled: Whether to enable hosted system addons for the cluster.
+    :vartype enabled: bool
+    """
+
+    _attribute_map = {
+        "enabled": {"key": "enabled", "type": "bool"},
+    }
+
+    def __init__(self, *, enabled: Optional[bool] = None, **kwargs: Any) -> None:
+        """
+        :keyword enabled: Whether to enable hosted system addons for the cluster.
+        :paramtype enabled: bool
+        """
+        super().__init__(**kwargs)
+        self.enabled = enabled
+
+
 class ManagedClusterHTTPProxyConfig(_serialization.Model):
     """Cluster HTTP proxy configuration.
 
@@ -7561,6 +8205,37 @@ class ManagedClusterIdentity(_serialization.Model):
         self.user_assigned_identities = user_assigned_identities
 
 
+class ManagedClusterIngressDefaultDomainProfile(_serialization.Model):  # pylint: disable=name-too-long
+    """ManagedClusterIngressDefaultDomainProfile.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar enabled: Whether to enable Default Domain.
+    :vartype enabled: bool
+    :ivar domain_name: The unique fully qualified domain name assigned to the cluster. This will
+     not change even if disabled then reenabled.
+    :vartype domain_name: str
+    """
+
+    _validation = {
+        "domain_name": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "enabled": {"key": "enabled", "type": "bool"},
+        "domain_name": {"key": "domainName", "type": "str"},
+    }
+
+    def __init__(self, *, enabled: Optional[bool] = None, **kwargs: Any) -> None:
+        """
+        :keyword enabled: Whether to enable Default Domain.
+        :paramtype enabled: bool
+        """
+        super().__init__(**kwargs)
+        self.enabled = enabled
+        self.domain_name: Optional[str] = None
+
+
 class ManagedClusterIngressProfile(_serialization.Model):
     """Ingress profile for the container service cluster.
 
@@ -7570,11 +8245,19 @@ class ManagedClusterIngressProfile(_serialization.Model):
     :ivar web_app_routing: Web App Routing settings for the ingress profile.
     :vartype web_app_routing:
      ~azure.mgmt.containerservice.models.ManagedClusterIngressProfileWebAppRouting
+    :ivar application_load_balancer: Settings for the managed Application Load Balancer
+     installation.
+    :vartype application_load_balancer:
+     ~azure.mgmt.containerservice.models.ManagedClusterIngressProfileApplicationLoadBalancer
     """
 
     _attribute_map = {
         "gateway_api": {"key": "gatewayAPI", "type": "ManagedClusterIngressProfileGatewayConfiguration"},
         "web_app_routing": {"key": "webAppRouting", "type": "ManagedClusterIngressProfileWebAppRouting"},
+        "application_load_balancer": {
+            "key": "applicationLoadBalancer",
+            "type": "ManagedClusterIngressProfileApplicationLoadBalancer",
+        },
     }
 
     def __init__(
@@ -7582,6 +8265,7 @@ class ManagedClusterIngressProfile(_serialization.Model):
         *,
         gateway_api: Optional["_models.ManagedClusterIngressProfileGatewayConfiguration"] = None,
         web_app_routing: Optional["_models.ManagedClusterIngressProfileWebAppRouting"] = None,
+        application_load_balancer: Optional["_models.ManagedClusterIngressProfileApplicationLoadBalancer"] = None,
         **kwargs: Any
     ) -> None:
         """
@@ -7591,10 +8275,47 @@ class ManagedClusterIngressProfile(_serialization.Model):
         :keyword web_app_routing: Web App Routing settings for the ingress profile.
         :paramtype web_app_routing:
          ~azure.mgmt.containerservice.models.ManagedClusterIngressProfileWebAppRouting
+        :keyword application_load_balancer: Settings for the managed Application Load Balancer
+         installation.
+        :paramtype application_load_balancer:
+         ~azure.mgmt.containerservice.models.ManagedClusterIngressProfileApplicationLoadBalancer
         """
         super().__init__(**kwargs)
         self.gateway_api = gateway_api
         self.web_app_routing = web_app_routing
+        self.application_load_balancer = application_load_balancer
+
+
+class ManagedClusterIngressProfileApplicationLoadBalancer(_serialization.Model):  # pylint: disable=name-too-long
+    """Application Load Balancer settings for the ingress profile.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar enabled: Whether to enable Application Load Balancer.
+    :vartype enabled: bool
+    :ivar identity: Managed identity of the Application Load Balancer add-on. This is the identity
+     that should be granted permissions to manage the associated Application Gateway for Containers
+     resource.
+    :vartype identity: ~azure.mgmt.containerservice.models.UserAssignedIdentity
+    """
+
+    _validation = {
+        "identity": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "enabled": {"key": "enabled", "type": "bool"},
+        "identity": {"key": "identity", "type": "UserAssignedIdentity"},
+    }
+
+    def __init__(self, *, enabled: Optional[bool] = None, **kwargs: Any) -> None:
+        """
+        :keyword enabled: Whether to enable Application Load Balancer.
+        :paramtype enabled: bool
+        """
+        super().__init__(**kwargs)
+        self.enabled = enabled
+        self.identity: Optional["_models.UserAssignedIdentity"] = None
 
 
 class ManagedClusterIngressProfileGatewayConfiguration(_serialization.Model):  # pylint: disable=name-too-long
@@ -7667,6 +8388,11 @@ class ManagedClusterIngressProfileWebAppRouting(_serialization.Model):  # pylint
     :ivar nginx: Configuration for the default NginxIngressController. See more at
      https://learn.microsoft.com/en-us/azure/aks/app-routing-nginx-configuration#the-default-nginx-ingress-controller.
     :vartype nginx: ~azure.mgmt.containerservice.models.ManagedClusterIngressProfileNginx
+    :ivar default_domain: Configuration for the Default Domain. This is a unique, autogenerated
+     domain that comes with a signed TLS Certificate allowing for secure HTTPS. See `the Default
+     Domain documentation <https://aka.ms/aks/defaultdomain>`_ for more instructions.
+    :vartype default_domain:
+     ~azure.mgmt.containerservice.models.ManagedClusterIngressDefaultDomainProfile
     :ivar identity: Managed identity of the Web Application Routing add-on. This is the identity
      that should be granted permissions, for example, to manage the associated Azure DNS resource
      and get certificates from Azure Key Vault. See `this overview of the add-on
@@ -7684,6 +8410,7 @@ class ManagedClusterIngressProfileWebAppRouting(_serialization.Model):  # pylint
         "enabled": {"key": "enabled", "type": "bool"},
         "dns_zone_resource_ids": {"key": "dnsZoneResourceIds", "type": "[str]"},
         "nginx": {"key": "nginx", "type": "ManagedClusterIngressProfileNginx"},
+        "default_domain": {"key": "defaultDomain", "type": "ManagedClusterIngressDefaultDomainProfile"},
         "identity": {"key": "identity", "type": "UserAssignedIdentity"},
     }
 
@@ -7693,6 +8420,7 @@ class ManagedClusterIngressProfileWebAppRouting(_serialization.Model):  # pylint
         enabled: Optional[bool] = None,
         dns_zone_resource_ids: Optional[List[str]] = None,
         nginx: Optional["_models.ManagedClusterIngressProfileNginx"] = None,
+        default_domain: Optional["_models.ManagedClusterIngressDefaultDomainProfile"] = None,
         **kwargs: Any
     ) -> None:
         """
@@ -7706,11 +8434,17 @@ class ManagedClusterIngressProfileWebAppRouting(_serialization.Model):  # pylint
         :keyword nginx: Configuration for the default NginxIngressController. See more at
          https://learn.microsoft.com/en-us/azure/aks/app-routing-nginx-configuration#the-default-nginx-ingress-controller.
         :paramtype nginx: ~azure.mgmt.containerservice.models.ManagedClusterIngressProfileNginx
+        :keyword default_domain: Configuration for the Default Domain. This is a unique, autogenerated
+         domain that comes with a signed TLS Certificate allowing for secure HTTPS. See `the Default
+         Domain documentation <https://aka.ms/aks/defaultdomain>`_ for more instructions.
+        :paramtype default_domain:
+         ~azure.mgmt.containerservice.models.ManagedClusterIngressDefaultDomainProfile
         """
         super().__init__(**kwargs)
         self.enabled = enabled
         self.dns_zone_resource_ids = dns_zone_resource_ids
         self.nginx = nginx
+        self.default_domain = default_domain
         self.identity: Optional["_models.UserAssignedIdentity"] = None
 
 
@@ -9412,7 +10146,7 @@ class ManagedClusterStatus(_serialization.Model):
 
     :ivar provisioning_error: The error details information of the managed cluster. Preserves the
      detailed info of failure. If there was no error, this field is omitted.
-    :vartype provisioning_error: ~azure.mgmt.containerservice.models.CloudErrorBody
+    :vartype provisioning_error: ~azure.mgmt.containerservice.models.ErrorDetail
     """
 
     _validation = {
@@ -9420,13 +10154,13 @@ class ManagedClusterStatus(_serialization.Model):
     }
 
     _attribute_map = {
-        "provisioning_error": {"key": "provisioningError", "type": "CloudErrorBody"},
+        "provisioning_error": {"key": "provisioningError", "type": "ErrorDetail"},
     }
 
     def __init__(self, **kwargs: Any) -> None:
         """ """
         super().__init__(**kwargs)
-        self.provisioning_error: Optional["_models.CloudErrorBody"] = None
+        self.provisioning_error: Optional["_models.ErrorDetail"] = None
 
 
 class ManagedClusterStorageProfile(_serialization.Model):
@@ -9848,7 +10582,7 @@ class ManagedNamespace(SubResource):
     :vartype tags: dict[str, str]
     :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
      will change when the resource is updated. Specify an if-match or if-none-match header with the
-     eTag value for a subsequent request to enable optimistic concurrency per the normal etag
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
      convention.
     :vartype e_tag: str
     :ivar location: The location of the namespace.
@@ -9986,6 +10720,145 @@ class ManualScaleProfile(_serialization.Model):
         super().__init__(**kwargs)
         self.size = size
         self.count = count
+
+
+class MeshMembership(ProxyResource):
+    """Mesh membership of a managed cluster.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar id: Fully qualified resource ID for the resource. E.g.
+     "/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/{resourceProviderNamespace}/{resourceType}/{resourceName}".
+    :vartype id: str
+    :ivar name: The name of the resource.
+    :vartype name: str
+    :ivar type: The type of the resource. E.g. "Microsoft.Compute/virtualMachines" or
+     "Microsoft.Storage/storageAccounts".
+    :vartype type: str
+    :ivar system_data: Azure Resource Manager metadata containing createdBy and modifiedBy
+     information.
+    :vartype system_data: ~azure.mgmt.containerservice.models.SystemData
+    :ivar managed_by: The fully qualified resource ID of the resource that manages this resource.
+     Indicates if this resource is managed by another Azure resource. If this is present, complete
+     mode deployment will not delete the resource if it is removed from the template since it is
+     managed by another resource.
+    :vartype managed_by: str
+    :ivar e_tag: Unique read-only string used to implement optimistic concurrency. The eTag value
+     will change when the resource is updated. Specify an if-match or if-none-match header with the
+     eTag value for a subsequent request to enable optimistic concurrency per the normal eTag
+     convention.
+    :vartype e_tag: str
+    :ivar properties: Mesh membership properties of a managed cluster.
+    :vartype properties: ~azure.mgmt.containerservice.models.MeshMembershipProperties
+    """
+
+    _validation = {
+        "id": {"readonly": True},
+        "name": {"readonly": True},
+        "type": {"readonly": True},
+        "system_data": {"readonly": True},
+        "e_tag": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "id": {"key": "id", "type": "str"},
+        "name": {"key": "name", "type": "str"},
+        "type": {"key": "type", "type": "str"},
+        "system_data": {"key": "systemData", "type": "SystemData"},
+        "managed_by": {"key": "managedBy", "type": "str"},
+        "e_tag": {"key": "eTag", "type": "str"},
+        "properties": {"key": "properties", "type": "MeshMembershipProperties"},
+    }
+
+    def __init__(
+        self,
+        *,
+        managed_by: Optional[str] = None,
+        properties: Optional["_models.MeshMembershipProperties"] = None,
+        **kwargs: Any
+    ) -> None:
+        """
+        :keyword managed_by: The fully qualified resource ID of the resource that manages this
+         resource. Indicates if this resource is managed by another Azure resource. If this is present,
+         complete mode deployment will not delete the resource if it is removed from the template since
+         it is managed by another resource.
+        :paramtype managed_by: str
+        :keyword properties: Mesh membership properties of a managed cluster.
+        :paramtype properties: ~azure.mgmt.containerservice.models.MeshMembershipProperties
+        """
+        super().__init__(**kwargs)
+        self.managed_by = managed_by
+        self.e_tag: Optional[str] = None
+        self.properties = properties
+
+
+class MeshMembershipProperties(_serialization.Model):
+    """Mesh membership properties of a managed cluster.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    All required parameters must be populated in order to send to server.
+
+    :ivar provisioning_state: The current provisioning state of the Mesh Membership. Known values
+     are: "Canceled", "Creating", "Deleting", "Failed", "Succeeded", and "Updating".
+    :vartype provisioning_state: str or
+     ~azure.mgmt.containerservice.models.MeshMembershipProvisioningState
+    :ivar managed_mesh_id: The ARM resource id for the managed mesh member. This is of the form:
+     '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppLink/applinks/{appLinkName}/appLinkMembers/{appLinkMemberName}'.
+     Visit https://aka.ms/applink for more information. Required.
+    :vartype managed_mesh_id: str
+    """
+
+    _validation = {
+        "provisioning_state": {"readonly": True},
+        "managed_mesh_id": {"required": True},
+    }
+
+    _attribute_map = {
+        "provisioning_state": {"key": "provisioningState", "type": "str"},
+        "managed_mesh_id": {"key": "managedMeshID", "type": "str"},
+    }
+
+    def __init__(self, *, managed_mesh_id: str, **kwargs: Any) -> None:
+        """
+        :keyword managed_mesh_id: The ARM resource id for the managed mesh member. This is of the form:
+         '/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.AppLink/applinks/{appLinkName}/appLinkMembers/{appLinkMemberName}'.
+         Visit https://aka.ms/applink for more information. Required.
+        :paramtype managed_mesh_id: str
+        """
+        super().__init__(**kwargs)
+        self.provisioning_state: Optional[Union[str, "_models.MeshMembershipProvisioningState"]] = None
+        self.managed_mesh_id = managed_mesh_id
+
+
+class MeshMembershipsListResult(_serialization.Model):
+    """The result of a request to list mesh memberships in a managed cluster.
+
+    Variables are only populated by the server, and will be ignored when sending a request.
+
+    :ivar value: The list of mesh memberships.
+    :vartype value: list[~azure.mgmt.containerservice.models.MeshMembership]
+    :ivar next_link: The URL to get the next set of mesh membership results.
+    :vartype next_link: str
+    """
+
+    _validation = {
+        "next_link": {"readonly": True},
+    }
+
+    _attribute_map = {
+        "value": {"key": "value", "type": "[MeshMembership]"},
+        "next_link": {"key": "nextLink", "type": "str"},
+    }
+
+    def __init__(self, *, value: Optional[List["_models.MeshMembership"]] = None, **kwargs: Any) -> None:
+        """
+        :keyword value: The list of mesh memberships.
+        :paramtype value: list[~azure.mgmt.containerservice.models.MeshMembership]
+        """
+        super().__init__(**kwargs)
+        self.value = value
+        self.next_link: Optional[str] = None
 
 
 class MeshRevision(_serialization.Model):
@@ -10230,12 +11103,14 @@ class NamespaceProperties(_serialization.Model):
      CORS, allowing the Azure Portal to function properly.
     :vartype portal_fqdn: str
     :ivar default_resource_quota: The default resource quota enforced upon the namespace. Customers
-     can have other Kubernetes resource quota objects under the namespace. All the resource quotas
-     will be enforced.
+     can have other Kubernetes resource quota objects under the namespace. Resource quotas are
+     additive; if multiple resource quotas are applied to a given namespace, then the effective
+     limit will be one such that all quotas on the namespace can be satisfied.
     :vartype default_resource_quota: ~azure.mgmt.containerservice.models.ResourceQuota
     :ivar default_network_policy: The default network policy enforced upon the namespace. Customers
-     can have other Kubernetes network policy objects under the namespace. All the network policies
-     will be enforced.
+     can have other Kubernetes network policy objects under the namespace. Network policies are
+     additive; if a policy or policies apply to a given pod for a given direction, the connections
+     allowed in that direction for the pod is the union of what all applicable policies allow.
     :vartype default_network_policy: ~azure.mgmt.containerservice.models.NetworkPolicies
     :ivar adoption_policy: Action if Kubernetes namespace with same name already exists. Known
      values are: "Never", "IfIdentical", and "Always".
@@ -10277,12 +11152,15 @@ class NamespaceProperties(_serialization.Model):
         :keyword annotations: The annotations of managed namespace.
         :paramtype annotations: dict[str, str]
         :keyword default_resource_quota: The default resource quota enforced upon the namespace.
-         Customers can have other Kubernetes resource quota objects under the namespace. All the
-         resource quotas will be enforced.
+         Customers can have other Kubernetes resource quota objects under the namespace. Resource quotas
+         are additive; if multiple resource quotas are applied to a given namespace, then the effective
+         limit will be one such that all quotas on the namespace can be satisfied.
         :paramtype default_resource_quota: ~azure.mgmt.containerservice.models.ResourceQuota
         :keyword default_network_policy: The default network policy enforced upon the namespace.
-         Customers can have other Kubernetes network policy objects under the namespace. All the network
-         policies will be enforced.
+         Customers can have other Kubernetes network policy objects under the namespace. Network
+         policies are additive; if a policy or policies apply to a given pod for a given direction, the
+         connections allowed in that direction for the pod is the union of what all applicable policies
+         allow.
         :paramtype default_network_policy: ~azure.mgmt.containerservice.models.NetworkPolicies
         :keyword adoption_policy: Action if Kubernetes namespace with same name already exists. Known
          values are: "Never", "IfIdentical", and "Always".
@@ -10396,6 +11274,28 @@ class NetworkProfileForSnapshot(_serialization.Model):
         self.network_policy = network_policy
         self.network_mode = network_mode
         self.load_balancer_sku = load_balancer_sku
+
+
+class NodeCustomizationProfile(_serialization.Model):
+    """Settings to determine the node customization used to provision nodes in a pool.
+
+    :ivar node_customization_id: The resource ID of the node customization resource to use. This
+     can be a version. Omitting the version will use the latest version of the node customization.
+    :vartype node_customization_id: str
+    """
+
+    _attribute_map = {
+        "node_customization_id": {"key": "nodeCustomizationId", "type": "str"},
+    }
+
+    def __init__(self, *, node_customization_id: Optional[str] = None, **kwargs: Any) -> None:
+        """
+        :keyword node_customization_id: The resource ID of the node customization resource to use. This
+         can be a version. Omitting the version will use the latest version of the node customization.
+        :paramtype node_customization_id: str
+        """
+        super().__init__(**kwargs)
+        self.node_customization_id = node_customization_id
 
 
 class NodeImageVersion(_serialization.Model):
@@ -11631,8 +12531,8 @@ class Snapshot(TrackedResource):
     :ivar os_sku: Specifies the OS SKU used by the agent pool. If not specified, the default is
      Ubuntu if OSType=Linux or Windows2019 if OSType=Windows. And the default Windows OSSKU will be
      changed to Windows2022 after Windows2019 is deprecated. Known values are: "Ubuntu", "Mariner",
-     "AzureLinux", "CBLMariner", "Windows2019", "Windows2022", "Windows2025", "WindowsAnnual",
-     "Ubuntu2204", and "Ubuntu2404".
+     "AzureLinux", "AzureLinux3", "Flatcar", "CBLMariner", "Windows2019", "Windows2022",
+     "Windows2025", "WindowsAnnual", "Ubuntu2204", and "Ubuntu2404".
     :vartype os_sku: str or ~azure.mgmt.containerservice.models.OSSKU
     :ivar vm_size: The size of the VM.
     :vartype vm_size: str
