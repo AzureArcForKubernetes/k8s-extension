@@ -69,7 +69,10 @@ class TestSourceControlConfigurationCompatibility(unittest.TestCase):
         self.assertTrue(hasattr(config, "api_version"))
         self.assertTrue(hasattr(config, "polling_interval"))
 
+<<<<<<< HEAD
     @unittest.skipUnless(HAS_AIOHTTP, "aiohttp is required for async client transport")
+=======
+>>>>>>> cc20fa95c (Upgrade k8s-extension extensions CLI commands to latest API version 2025-03-01)
     def test_async_client_passes_base_url_to_configuration(self):
         client = AsyncSourceControlConfigurationClient(
             credential=DummyAsyncCredential(),
