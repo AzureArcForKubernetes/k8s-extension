@@ -117,7 +117,7 @@ jobs:
            pip install azdev
            azdev --version
            cd ../
-           azdev setup -c azure-cli -r azure-cli-extensions --debug
+           azdev setup -c azure-cli -r k8s-extension --debug
            az --version
            pip list -v
       - name: Gen Base and Diff Metadata
