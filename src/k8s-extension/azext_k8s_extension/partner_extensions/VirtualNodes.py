@@ -30,8 +30,12 @@ RELEASE_NAMESPACE = "vn-system"  # release unique namespace
 ACI_SUBNET_NAME = "virtualnodes-aci-subnet"
 ACI_DELEGATION_SERVICE_NAME = "Microsoft.ContainerInstance/containerGroups"
 NODEPOOL_IDENTITY_FALLBACK_ENABLED = "false"
+AUTOSCALING_ENABLED = "true"
 ALLOWED_CONFIG_SETTINGS_KEYS = [
     "replicaCount",
+    "maxReplicas",
+    "autoscalerEnabled",
+    "scaleDownUnneededTime",
     "admissionControllerReplicaCount",
     "podAnnotations",
     "nodeSelector",
@@ -116,6 +120,7 @@ class VirtualNodes(DefaultExtension):
                original_extension, yes=False):
         validate_allowed_keys(configuration_settings, original_extension.extension_type)
         validate_allowed_keys(configuration_protected_settings, original_extension.extension_type)
+        set_autoscaling_configuration(configuration_settings)
 
         return PatchExtension(
             auto_upgrade_minor_version=auto_upgrade_minor_version,
@@ -147,6 +152,24 @@ def validate_configuration(configuration_settings, configuration_protected_setti
 
     configuration_settings["aciSubnetName"] = ACI_SUBNET_NAME
     configuration_settings["nodePoolIdentityFallbackEnabled"] = NODEPOOL_IDENTITY_FALLBACK_ENABLED
+    set_autoscaling_configuration(configuration_settings, AUTOSCALING_ENABLED)
+
+
+def set_autoscaling_configuration(configuration_settings, default_enabled=None):
+    if configuration_settings is None:
+        return
+
+    enabled = configuration_settings.pop("autoscalerEnabled", default_enabled)
+    if enabled is not None:
+        configuration_settings["clusterAutoscaler.enabled"] = enabled
+        configuration_settings["autoscaling.enabled"] = enabled
+
+    if "replicaCount" in configuration_settings:
+        configuration_settings["autoscaling.minSize"] = configuration_settings["replicaCount"]
+    if "maxReplicas" in configuration_settings:
+        configuration_settings["autoscaling.maxSize"] = configuration_settings["maxReplicas"]
+    if "scaleDownUnneededTime" in configuration_settings:
+        configuration_settings["clusterAutoscaler.profile.scale-down-unneeded-time"] = configuration_settings.pop("scaleDownUnneededTime")
 
 
 def validate_node_pools(cmd, cluster):
