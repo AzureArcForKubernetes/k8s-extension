@@ -33,9 +33,10 @@ NODEPOOL_IDENTITY_FALLBACK_ENABLED = "false"
 AUTOSCALING_ENABLED = "true"
 ALLOWED_CONFIG_SETTINGS_KEYS = [
     "replicaCount",
-    "maxReplicas",
-    "autoscalerEnabled",
-    "scaleDownUnneededTime",
+    "min-count",
+    "max-count",
+    "enable-cluster-autoscaler",
+    "scale-down-unneeded-time",
     "admissionControllerReplicaCount",
     "podAnnotations",
     "nodeSelector",
@@ -159,17 +160,22 @@ def set_autoscaling_configuration(configuration_settings, default_enabled=None):
     if configuration_settings is None:
         return
 
-    enabled = configuration_settings.pop("autoscalerEnabled", default_enabled)
+    enabled = configuration_settings.pop("enable-cluster-autoscaler", default_enabled)
     if enabled is not None:
         configuration_settings["clusterAutoscaler.enabled"] = enabled
         configuration_settings["autoscaling.enabled"] = enabled
 
-    if "replicaCount" in configuration_settings:
-        configuration_settings["autoscaling.minSize"] = configuration_settings["replicaCount"]
-    if "maxReplicas" in configuration_settings:
-        configuration_settings["autoscaling.maxSize"] = configuration_settings["maxReplicas"]
-    if "scaleDownUnneededTime" in configuration_settings:
-        configuration_settings["clusterAutoscaler.profile.scale-down-unneeded-time"] = configuration_settings.pop("scaleDownUnneededTime")
+    min_count = configuration_settings.pop("min-count", None)
+    if min_count is not None:
+        configuration_settings["autoscaling.minSize"] = min_count
+
+    max_count = configuration_settings.pop("max-count", None)
+    if max_count is not None:
+        configuration_settings["autoscaling.maxSize"] = max_count
+
+    scale_down_unneeded_time = configuration_settings.pop("scale-down-unneeded-time", None)
+    if scale_down_unneeded_time is not None:
+        configuration_settings["clusterAutoscaler.profile.scale-down-unneeded-time"] = scale_down_unneeded_time
 
 
 def validate_node_pools(cmd, cluster):
