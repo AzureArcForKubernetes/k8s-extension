@@ -266,7 +266,7 @@ class ChaosStudio(DefaultExtension):
                     "Completed extension did not expose a valid aksAssignedIdentity.{}.".format(field)
                 )
             values.append(str(parsed))
-        return tuple(values)
+        return values[0], values[1]
 
     @classmethod
     def _stage(cls, extension):
