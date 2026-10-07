@@ -121,6 +121,12 @@ class VirtualNodes(DefaultExtension):
                original_extension, yes=False):
         validate_allowed_keys(configuration_settings, original_extension.extension_type)
         validate_allowed_keys(configuration_protected_settings, original_extension.extension_type)
+        original_settings = original_extension.configuration_settings or {}
+        autoscaling_enabled = original_settings.get(
+            "clusterAutoscaler.enabled",
+            original_settings.get("autoscaling.enabled", AUTOSCALING_ENABLED),
+        )
+        validate_replica_count(configuration_settings, autoscaling_enabled)
         set_autoscaling_configuration(configuration_settings)
 
         return PatchExtension(
@@ -160,6 +166,9 @@ def set_autoscaling_configuration(configuration_settings, default_enabled=None):
     if configuration_settings is None:
         return
 
+    enabled = configuration_settings.get("enable-cluster-autoscaler", default_enabled)
+    validate_replica_count(configuration_settings, enabled)
+
     enabled = configuration_settings.pop("enable-cluster-autoscaler", default_enabled)
     if enabled is not None:
         configuration_settings["clusterAutoscaler.enabled"] = enabled
@@ -176,6 +185,18 @@ def set_autoscaling_configuration(configuration_settings, default_enabled=None):
     scale_down_unneeded_time = configuration_settings.pop("scale-down-unneeded-time", None)
     if scale_down_unneeded_time is not None:
         configuration_settings["clusterAutoscaler.profile.scale-down-unneeded-time"] = scale_down_unneeded_time
+
+
+def validate_replica_count(configuration_settings, autoscaling_enabled):
+    if configuration_settings is None:
+        return
+
+    enabled = configuration_settings.get("enable-cluster-autoscaler", autoscaling_enabled)
+    if "replicaCount" in configuration_settings and enabled is not None and str(enabled).lower() != "false":
+        raise InvalidArgumentValueError(
+            "The 'replicaCount' configuration setting cannot be used when cluster autoscaling is enabled. "
+            "Use 'min-count' and 'max-count' instead."
+        )
 
 
 def validate_node_pools(cmd, cluster):
