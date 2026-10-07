@@ -30,8 +30,13 @@ RELEASE_NAMESPACE = "vn-system"  # release unique namespace
 ACI_SUBNET_NAME = "virtualnodes-aci-subnet"
 ACI_DELEGATION_SERVICE_NAME = "Microsoft.ContainerInstance/containerGroups"
 NODEPOOL_IDENTITY_FALLBACK_ENABLED = "false"
+AUTOSCALING_ENABLED = "true"
 ALLOWED_CONFIG_SETTINGS_KEYS = [
     "replicaCount",
+    "min-count",
+    "max-count",
+    "enable-cluster-autoscaler",
+    "scale-down-unneeded-time",
     "admissionControllerReplicaCount",
     "podAnnotations",
     "nodeSelector",
@@ -116,6 +121,13 @@ class VirtualNodes(DefaultExtension):
                original_extension, yes=False):
         validate_allowed_keys(configuration_settings, original_extension.extension_type)
         validate_allowed_keys(configuration_protected_settings, original_extension.extension_type)
+        original_settings = original_extension.configuration_settings or {}
+        autoscaling_enabled = original_settings.get(
+            "clusterAutoscaler.enabled",
+            original_settings.get("autoscaling.enabled", AUTOSCALING_ENABLED),
+        )
+        validate_replica_count(configuration_settings, autoscaling_enabled)
+        set_autoscaling_configuration(configuration_settings)
 
         return PatchExtension(
             auto_upgrade_minor_version=auto_upgrade_minor_version,
@@ -147,6 +159,44 @@ def validate_configuration(configuration_settings, configuration_protected_setti
 
     configuration_settings["aciSubnetName"] = ACI_SUBNET_NAME
     configuration_settings["nodePoolIdentityFallbackEnabled"] = NODEPOOL_IDENTITY_FALLBACK_ENABLED
+    set_autoscaling_configuration(configuration_settings, AUTOSCALING_ENABLED)
+
+
+def set_autoscaling_configuration(configuration_settings, default_enabled=None):
+    if configuration_settings is None:
+        return
+
+    enabled = configuration_settings.get("enable-cluster-autoscaler", default_enabled)
+    validate_replica_count(configuration_settings, enabled)
+
+    enabled = configuration_settings.pop("enable-cluster-autoscaler", default_enabled)
+    if enabled is not None:
+        configuration_settings["clusterAutoscaler.enabled"] = enabled
+        configuration_settings["autoscaling.enabled"] = enabled
+
+    min_count = configuration_settings.pop("min-count", None)
+    if min_count is not None:
+        configuration_settings["autoscaling.minSize"] = min_count
+
+    max_count = configuration_settings.pop("max-count", None)
+    if max_count is not None:
+        configuration_settings["autoscaling.maxSize"] = max_count
+
+    scale_down_unneeded_time = configuration_settings.pop("scale-down-unneeded-time", None)
+    if scale_down_unneeded_time is not None:
+        configuration_settings["clusterAutoscaler.profile.scale-down-unneeded-time"] = scale_down_unneeded_time
+
+
+def validate_replica_count(configuration_settings, autoscaling_enabled):
+    if configuration_settings is None:
+        return
+
+    enabled = configuration_settings.get("enable-cluster-autoscaler", autoscaling_enabled)
+    if "replicaCount" in configuration_settings and enabled is not None and str(enabled).lower() != "false":
+        raise InvalidArgumentValueError(
+            "The 'replicaCount' configuration setting cannot be used when cluster autoscaling is enabled. "
+            "Use 'min-count' and 'max-count' instead."
+        )
 
 
 def validate_node_pools(cmd, cluster):

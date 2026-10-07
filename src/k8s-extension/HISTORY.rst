@@ -2,6 +2,10 @@
 
 Release History
 ===============
+1.9.2
++++++++++++++++++++
+* Microsoft.virtualnodes: adding support for autoscaling configuration settings.
+
 1.9.1
 +++++++++++++++++++
 * Microsoft.ChaosStudio: pass --version through to the extension service; default to the latest registered version instead of pinning chart 0.1.6.
