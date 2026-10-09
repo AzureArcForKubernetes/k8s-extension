@@ -296,6 +296,7 @@ class ChaosStudio(DefaultExtension):
             workspace_id, self._recommended_connection_name(workspace_id, cluster_id)
         )
         phase = "inspection"
+        written = []
         try:
             versions = cf_k8s_extension_types(cmd.cli_ctx).cluster_list_versions(
                 resource_group_name, cluster_rp, cluster_type, cluster_name,
@@ -311,6 +312,10 @@ class ChaosStudio(DefaultExtension):
                 existing = None
             connection = arm.get(connection_id, self.CONNECTION_API_VERSION,
                                  "Chaos Studio workspace connection", allow_not_found=True)
+            if existing is not None:
+                written.append(["extension", extension_id, True])
+            if connection is not None:
+                written.append(["workspace connection", connection_id, True])
             if existing is not None:
                 self._validate_existing(existing, extension, cluster_id)
                 stage = self._stage(existing)
@@ -342,6 +347,7 @@ class ChaosStudio(DefaultExtension):
                 cmd, resource_group_name, cluster_name, workspace_id,
                 self._existing_release_namespace(extension, settings),
                 settings.get(self.EXISTING_ROLE_KEY),
+                written,
             ))
             phase = "bootstrap"
             if existing is None or (
@@ -350,14 +356,18 @@ class ChaosStudio(DefaultExtension):
                 settings[self.ENABLED_KEY] = "false"
                 settings.pop(self.SERVER_ENDPOINT_KEY, None)
                 extension.configuration_settings = settings
-                LongRunningOperation(cmd.cli_ctx)(client.begin_create(*args, extension))
+                poller = self._record_write(
+                    written, "extension", extension_id,
+                    lambda: client.begin_create(*args, extension),
+                )
+                LongRunningOperation(cmd.cli_ctx)(poller)
                 existing = client.get(*args)
                 self._require_success(existing)
 
             phase = "connection"
             principal, tenant = self._platform_identity(existing)
             endpoint = self._reconcile_workspace_connection(
-                arm, workspace_id, cluster_id, principal, tenant
+                arm, workspace_id, cluster_id, principal, tenant, written
             )
             if self._stage(existing) == "true" and (
                 existing.configuration_settings.get(self.SERVER_ENDPOINT_KEY) != endpoint
@@ -382,11 +392,45 @@ class ChaosStudio(DefaultExtension):
             return final
         except (CLIError, AzureError, ValueError) as error:
             raise AzureResponseError(
-                "Chaos {} failed. Extension '{}', connection '{}' and workspace permissions "
-                "were retained; rerun after correcting the error. {}".format(
-                    phase, extension_id, connection_id, error
-                )
+                "Chaos {} failed. {} {}".format(phase, error, self._describe_written(written))
             ) from error
+
+    @staticmethod
+    def _record_write(written, label, resource_id, write):
+        """Run one Azure write and record whether its resource now exists.
+
+        A 4xx response means Azure rejected the write; any other failure leaves
+        the outcome unknown, so the resource is reported as possibly existing.
+        """
+        entry = [label, resource_id, False]
+        written.append(entry)
+        try:
+            result = write()
+        except (CLIError, AzureError) as error:
+            status = getattr(error, "status_code", None)
+            if isinstance(status, int) and 400 <= status < 500:
+                written.remove(entry)
+            raise
+        entry[2] = True
+        return result
+
+    @staticmethod
+    def _describe_written(written):
+        certain = {}
+        for label, resource_id, exists in written:
+            certain[(label, resource_id)] = certain.get((label, resource_id), False) or exists
+        if not certain:
+            return "Nothing was created in Azure. Fix the error, then rerun the same command."
+        exist = ["{} '{}'".format(*key) for key, value in certain.items() if value]
+        maybe = ["{} '{}'".format(*key) for key, value in certain.items() if not value]
+        parts = []
+        if exist:
+            parts.append("These resources exist: {}.".format(", ".join(exist)))
+        if maybe:
+            parts.append("These may exist because their request didn't complete: {}.".format(
+                ", ".join(maybe)))
+        parts.append("Fix the error, then rerun the same command.")
+        return " ".join(parts)
 
     @staticmethod
     def _state(extension):
@@ -564,7 +608,9 @@ class ChaosStudio(DefaultExtension):
         workspace_id,
         release_namespace,
         existing_role_id=None,
+        written=None,
     ):
+        written = [] if written is None else written
         arm = self._arm_client_factory(cmd)
         cluster_id = self._cluster_resource_id(
             arm.subscription_id, resource_group_name, cluster_name
@@ -622,20 +668,38 @@ class ChaosStudio(DefaultExtension):
         daemon_enabled = self._daemon_enabled(arm, cluster_id, release_namespace)
 
         if role_definition is None:
-            arm.put(
-                resource_ids["role_definition"],
-                self.AUTHORIZATION_API_VERSION,
-                "Chaos Studio Kubernetes Operator role definition",
-                self._role_definition_body(arm.subscription_id),
-            )
+            try:
+                self._record_write(
+                    written, "role definition", resource_ids["role_definition"],
+                    lambda: arm.put(
+                        resource_ids["role_definition"],
+                        self.AUTHORIZATION_API_VERSION,
+                        "Chaos Studio Kubernetes Operator role definition",
+                        self._role_definition_body(arm.subscription_id),
+                    ),
+                )
+            except AzureResponseError as error:
+                if "RoleDefinitionLimitExceeded" not in str(error):
+                    raise
+                raise AzureResponseError(
+                    "{} This tenant has reached its Azure custom role limit, so the Chaos "
+                    "Studio Kubernetes Operator role can't be created. Remove an unused "
+                    "custom role from the tenant, or rerun with --configuration-settings "
+                    "{}=<role definition ID> to use an existing custom role whose only "
+                    "assignable scope is /subscriptions/{} and that grants the same "
+                    "permissions.".format(error, self.EXISTING_ROLE_KEY, arm.subscription_id)
+                ) from error
         if role_assignment is None:
-            arm.put(
-                resource_ids["role_assignment"],
-                self.AUTHORIZATION_API_VERSION,
-                "workspace managed identity role assignment",
-                self._role_assignment_body(
-                    resource_ids["role_definition"],
-                    workspace_principal_id,
+            self._record_write(
+                written, "role assignment", resource_ids["role_assignment"],
+                lambda: arm.put(
+                    resource_ids["role_assignment"],
+                    self.AUTHORIZATION_API_VERSION,
+                    "workspace managed identity role assignment",
+                    self._role_assignment_body(
+                        resource_ids["role_definition"],
+                        workspace_principal_id,
+                    ),
                 ),
             )
 
@@ -720,7 +784,9 @@ class ChaosStudio(DefaultExtension):
         cluster_id,
         principal_id,
         tenant_id,
+        written=None,
     ):
+        written = [] if written is None else written
         connection_name = cls._recommended_connection_name(
             workspace_id, cluster_id
         )
@@ -733,11 +799,14 @@ class ChaosStudio(DefaultExtension):
             "principalId": principal_id,
             "tenantId": tenant_id,
         }
-        connection = arm.put(
-            connection_id,
-            cls.CONNECTION_API_VERSION,
-            "Chaos Studio workspace connection",
-            {"properties": expected},
+        connection = cls._record_write(
+            written, "workspace connection", connection_id,
+            lambda: arm.put(
+                connection_id,
+                cls.CONNECTION_API_VERSION,
+                "Chaos Studio workspace connection",
+                {"properties": expected},
+            ),
         )
         return cls._connection_endpoint(connection, cluster_id, principal_id, tenant_id)
 

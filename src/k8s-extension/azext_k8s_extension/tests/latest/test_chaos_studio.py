@@ -46,6 +46,7 @@ class Arm:
             WORKSPACE: {"identity": {"type": "SystemAssigned", "principalId": WORKSPACE_PRINCIPAL}},
         }
         self.fail_connection = False
+        self.fail_role_definition = None
         self.lost_response = False
         self.fail_reads = set()
 
@@ -62,6 +63,8 @@ class Arm:
     def put(self, resource_id, _api, _description, body):
         self.events.append(("arm-put", resource_id))
         if "/roleDefinitions/" in resource_id:
+            if self.fail_role_definition is not None:
+                raise self.fail_role_definition
             guid = resource_id.rsplit("/", 1)[-1]
             name = body["properties"]["roleName"]
             scopes = body["properties"]["assignableScopes"]
@@ -72,7 +75,9 @@ class Arm:
             self.tenant_roles[guid] = (name, scopes)
         if "/connections/" in resource_id:
             if self.fail_connection:
-                raise AzureResponseError("grant publication failed")
+                error = AzureResponseError("grant publication failed")
+                error.status_code = 400
+                raise error
             old = self.resources.get(resource_id)
             if old and any(old["properties"].get(k) != v for k, v in body["properties"].items()):
                 raise AzureResponseError("immutable trust conflict")
@@ -292,9 +297,46 @@ class ChaosStudioTests(unittest.TestCase):
     def test_inspection_error_does_not_become_absent_extension(self):
         for error in (AzureResponseError("access denied"), ServiceRequestError("connection lost")):
             with self.subTest(error=error), patch.object(self.client, "get", side_effect=error):
-                with self.assertRaisesRegex(AzureResponseError, "inspection.*retained"):
+                with self.assertRaisesRegex(AzureResponseError, "inspection.*Nothing was created"):
                     self.run_install()
         self.assertFalse(any(e[0] in ("create", "update", "arm-put") for e in self.events))
+
+    def test_role_limit_failure_reports_nothing_created(self):
+        error = AzureResponseError(
+            'Bad Request({"error":{"code":"RoleDefinitionLimitExceeded",'
+            '"message":"Role definition limit exceeded. No more role definitions can be created."}})')
+        error.status_code = 400
+        self.arm.fail_role_definition = error
+        with self.assertRaises(AzureResponseError) as raised:
+            self.run_install()
+        message = str(raised.exception)
+        self.assertIn("RoleDefinitionLimitExceeded", message)
+        self.assertIn("Nothing was created in Azure", message)
+        self.assertIn("chaos-existing-role-definition-id=", message)
+        self.assertIn("/subscriptions/{}".format(SUB), message)
+        self.assertNotIn("exist:", message)
+        self.assertNotIn(CONNECTION, message)
+        # The message must match reality: no extension and no connection exist.
+        self.assertIsNone(self.client.extension)
+        self.assertNotIn(CONNECTION, self.arm.resources)
+        self.assertFalse(any("/role" in key for key in self.arm.resources))
+
+    def test_connection_failure_names_only_existing_resources(self):
+        self.arm.fail_connection = True
+        with self.assertRaises(AzureResponseError) as raised:
+            self.run_install()
+        message = str(raised.exception)
+        existing = message.split("These resources exist:", 1)[1].split("Fix the error", 1)[0]
+        role_ids = [key for key in self.arm.resources if "/role" in key]
+        self.assertEqual(len(role_ids), 2)
+        for role_id in role_ids:
+            self.assertIn(role_id, existing)
+        self.assertIsNotNone(self.client.extension)
+        self.assertIn("extension '{}/providers/Microsoft.KubernetesConfiguration/extensions/chaos'".format(
+            CLUSTER), existing)
+        self.assertNotIn(CONNECTION, self.arm.resources)
+        self.assertNotIn(CONNECTION, message)
+        self.assertNotIn("may exist", message)
 
     def test_update_preserves_settings_and_workspace_permissions(self):
         self.run_install(configuration_settings={
@@ -450,7 +492,7 @@ class ChaosStudioTests(unittest.TestCase):
 
     def test_resume_after_lost_connection_response(self):
         self.arm.lost_response = True
-        with self.assertRaisesRegex(AzureResponseError, "connection.*retained"):
+        with self.assertRaisesRegex(AzureResponseError, "may exist.*workspace connection '{}'".format(CONNECTION)):
             self.run_install()
         self.events.clear()
         self.run_install()
