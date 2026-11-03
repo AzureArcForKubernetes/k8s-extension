@@ -160,6 +160,9 @@ stages:
           # clone azure-cli
           git clone --single-branch -b dev https://github.com/Azure/azure-cli.git ../azure-cli
 
+          # pytest 9.2 breaks pytest-forked 1.7.5; reuse upstream's pip constraints
+          export PIP_CONSTRAINT="$(realpath .azure-pipelines/constraints.txt)"
+
           pip install --upgrade pip
           pip install azdev
 
