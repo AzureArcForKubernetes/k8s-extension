@@ -65,14 +65,22 @@ owned legacy assignment until uninstall so migration doesn't remove working
 authorization while the new assignment propagates. The old
 ``chaos-existing-role-definition-id`` setting no longer selects the assigned role;
 its persisted value only identifies an older owned assignment for cleanup.
+The value is validated before installation or updates and is immutable once
+installed; updates cannot add it or replace the original cleanup ID. Invalid
+persisted cleanup metadata stops uninstall before the connection or owned role
+assignments are deleted. The CLI does not guess the original role; that state
+requires owner-led repair from the installation record.
+An active create rerun that waits for a pending operation reconciles the built-in
+assignment after successful completion too; pending ``--no-wait`` calls and failed
+operations do not add an assignment.
 Updates retain existing configuration and reconcile prerequisites. Changing the
 workspace or release namespace requires deleting and recreating the extension.
 Delete removes the matching owned connection before both deterministic owned
 workspace role assignments (built-in and legacy); it preserves all role definitions and resources that fail
 ownership checks. Platform identity cleanup remains part of extension deletion.
 
-Namespace ownership and uninstall
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Namespace ownership and retention
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Before the first bootstrap, the CLI reads the release namespace from the target
 AKS cluster using user credentials, not the current kube context. It passes
@@ -82,27 +90,40 @@ and updates can't override it. The compatible chart writes
 ``chaosstudio.microsoft.com/namespace-created-by=<release-namespace>/<release-name>``
 only on initial install. Older or pre-existing namespaces aren't adopted.
 
-A synchronous delete waits for the extension operation to finish before checking
-both the persisted ``namespaceLifecycle.createdByInstall=true`` assertion and
-that marker, then inventorying every namespaced API kind, including Secrets,
-ConfigMaps and custom resources, with pagination. An owned namespace is deleted
-only if no customer resources remain. The inventory excludes core/v1 and
-events.k8s.io Events, which are namespace-intrinsic and removed with the namespace,
-and the controller-managed default ServiceAccount and root CA ConfigMap, without customer
-changes or finalizers. AKS can omit managedFields on its pristine default
-ServiceAccount; customer annotations, labels, ownership references and account
-settings still prevent its exclusion. Create-only APIs such as bindings and
-access reviews aren't stored collections and aren't listed. Remaining resource names and preservation reasons are
-reported. Unmarked learned-key ConfigMaps and other runtime state aren't erased.
-``--no-wait`` and ``--force`` skip namespace cleanup because they don't confirm a
-completed Helm uninstall.
+Fetched ``kubelogin`` exec users use Azure CLI authentication, reusing the identity
+already signed in to ``az`` instead of prompting for device-code login. This
+normalization applies only to the fetched kubeconfig; it does not modify the
+current kube context or a kubeconfig file. Namespace-inspection connection
+failures and timeouts stop installation with phase and retry guidance; they
+are not evidence that the namespace is absent.
 
-This requires ``Microsoft.ContainerService/managedClusters/listClusterUserCredential/action``,
-``kubelogin`` for Entra clusters, target-cluster network access, namespace
-get/delete permission and list permission on every namespaced API kind.
-Authorization and discovery failures aren't evidence of absence. Cleanup and
-namespace finalization use the chart uninstall hook's 210-second API budget;
-failure to observe removal is an error, not a clean-uninstall result.
+A synchronous delete confirms the ARM extension deletion operation and reports
+that the release namespace and any remaining Kubernetes resources are retained.
+The CLI does not inventory namespace contents, delete namespaces or wait for
+namespace finalization during uninstall. ``--no-wait`` and ``--force`` do not
+perform namespace cleanup either.
+
+An installation marker proves creation ownership, not that every namespace
+writer is stopped. An inventory followed by namespace DELETE cannot preserve a
+customer object created between those operations, and namespace resourceVersion
+does not protect child objects. This version therefore does not attempt automatic
+namespace removal. It adds no admission drain, cleanup checkpoint or broader
+cleanup authority.
+
+An initial ARM 404 remains an idempotent result for the absent extension. It is
+not evidence that the namespace is absent and does not trigger Kubernetes cleanup.
+After confirmed extension removal, the CLI has no Kubernetes mutation or
+finalization operation to resume. Automatic namespace removal and its verified
+recovery contract remain deferred; this behavior is not full clean-namespace or
+GA cleanup acceptance.
+
+The installation ownership check still requires
+``Microsoft.ContainerService/managedClusters/listClusterUserCredential/action``,
+``kubelogin`` for Entra clusters, target-cluster network access and namespace GET
+permission. It remains bounded by a 210-second API budget. Uninstall performs no
+post-delete cluster credential request and needs no namespace DELETE or all-kind
+LIST permission for such cleanup. Existing ARM permissions for the owned
+connection and role assignments are unchanged.
 
 Stopped durable ChaosEngines remain in target namespaces as name reservations.
 Their ``chaosengines.litmuschaos.io`` CRD therefore remains too. Shared/foreign
@@ -139,9 +160,10 @@ stress-tools image.
 Pending live validation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-The built-in role rollout is pending. Don't count an install against an empty
-role definition as live authorization proof. Once the subscription's role readback
-contains all five permissions, run this checklist with a locally built wheel:
+Confirm the built-in role's effective permissions in the target subscription.
+Don't count an install against an empty role definition as live authorization
+proof. Once the subscription's role readback contains all five permissions, run
+this checklist with a locally built wheel:
 
 * Confirm ``az role definition list --name 681440c1-3630-4424-a530-0305ac721cfd``
   returns Actions ``Microsoft.KubernetesConfiguration/extensions/read``,
@@ -163,30 +185,34 @@ contains all five permissions, run this checklist with a locally built wheel:
 * On an existing legacy-role installation, run create and update. Verify the
   built-in assignment is added without removing the legacy assignment. Repeat
   to verify idempotence. Keep custom role definitions unchanged throughout.
-* Run synchronous uninstall without ``--force`` or ``--no-wait``. Verify extension
-  deletion completes before namespace removal and both owned assignments disappear.
-  Reinstall with a customer object or retained ChaosEngine in the release namespace
-  and verify uninstall preserves it and the namespace. A pre-existing namespace
-  must survive even if empty. Record wheel version/hash and ARM/Kubernetes readbacks.
+* Run synchronous uninstall without ``--force`` or ``--no-wait``. Verify ARM
+  extension deletion completes and both owned assignments disappear, while the
+  release namespace is retained even when empty. Repeat with a customer object
+  or retained ChaosEngine and verify the CLI does not modify it or the namespace.
+  A pre-existing namespace must survive too. Record wheel version/hash and
+  ARM/Kubernetes readbacks; do not record this as automatic namespace-removal proof.
 * Delete the disposable resource group and confirm absence.
-
-The 2026-10-21 disposable AKS attempt reached ``Succeeded`` with the local wheel
-and registered ``dev`` chart ``0.1.12``. The namespace had both creation markers.
-Uninstall removed the ARM extension, owned connection and built-in assignment.
-It exposed the create-only ``bindings`` discovery gap fixed here. Retrying
-namespace inspection preserved an unmarked ``durable-broker-learned-keys``
-ConfigMap and Kubernetes Events rather than erasing them. AKS also returned a
-pristine default ServiceAccount without managedFields, now covered by a regression.
-This isn't live proof of clean namespace removal. That proof waits for chart
-0.1.13 or later to be published and registered with the learned-key owner marker
-and pre-delete cleanup already implemented in Chaos origin/main. The CLI doesn't
-special-case learned-key state; preserving the unmarked ConfigMap on 0.1.12 is
-correct. Events no longer block namespace removal. The built-in role
-readback still had empty Actions and DataActions, so this isn't live role
-authorization proof either.
 
 Historical evidence, not validation of staged installation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The 2026-10-21 disposable AKS attempt used an earlier automatic namespace-cleanup
+implementation with a local wheel and registered ``dev`` chart ``0.1.12``.
+Installation reached ``Succeeded`` and the namespace had both creation markers.
+Uninstall removed the ARM extension, owned connection and built-in assignment.
+That attempt exposed a create-only ``bindings`` discovery gap and returned a
+pristine default ServiceAccount without managedFields. Its earlier cleanup
+implementation also preserved an unmarked ``durable-broker-learned-keys``
+ConfigMap and Kubernetes Events. The inventory/default-classifier implementation
+and its regressions were subsequently withdrawn; they are not delivered by this
+version. This CLI intentionally retains all namespace contents, including Events.
+The attempt was not live proof of clean namespace removal, and its empty built-in
+role Actions and DataActions were not live authorization proof.
+
+A chart release alone does not provide the concurrent-writer fence or durable
+recovery contract required for automatic namespace removal. The compatible
+chart's learned-key owner marker and pre-delete cleanup remain separate from that
+deferred capability. The CLI neither special-cases nor erases learned-key state.
 
 Installation and authorized data-plane polling succeeded with an earlier CLI
 implementation and dev chart ``0.1.3``, which explicitly provisioned subscriber identity.

@@ -4,14 +4,15 @@ Release History
 ===============
 1.9.5
 +++++++++++++++++++
+* Microsoft.ChaosStudio: intentionally retain release namespaces and their remaining Kubernetes resources on uninstall. Automatic namespace removal and its fenced/recoverable cleanup contract are deferred, not claimed as clean-namespace or GA cleanup acceptance.
+* Microsoft.ChaosStudio: validate and retain immutable legacy-role cleanup IDs before any teardown, and reconcile the built-in assignment after a pending active installation completes successfully.
 * Microsoft.ChaosStudio: assign the built-in Chaos Kubernetes Extension Operator role instead of provisioning or validating custom roles. Create and update add a separate built-in assignment; existing owned legacy assignments stay until uninstall to avoid interrupting authorization during migration. Delete removes both owned assignments but never role definitions.
-* Microsoft.ChaosStudio: require the persisted namespaceLifecycle.createdByInstall assertion as well as the matching namespace marker before post-uninstall namespace removal.
-* Microsoft.ChaosStudio: skip create-only Kubernetes APIs such as bindings and access reviews during namespace inventory; they aren't stored collections. Readable kinds without list support still fail cleanup.
-* Microsoft.ChaosStudio: recognize AKS's pristine default ServiceAccount when managedFields is absent, but retain accounts with customer metadata or settings.
+* Microsoft.ChaosStudio: retain namespace creation metadata for compatible charts. Uninstall does not evaluate ownership markers or remove namespaces.
 * Microsoft.ChaosStudio: record namespace creation ownership before bootstrap and preserve it on resumed installs. Callers can't override namespaceLifecycle.createdByInstall.
-* Microsoft.ChaosStudio: after confirmed synchronous extension deletion, inventory all namespaced API kinds with pagination and delete the namespace only when its creation marker matches the installation and no customer resources remain. Namespace-intrinsic core/v1 and events.k8s.io Events, controller-managed default ServiceAccounts and root CA ConfigMaps are excluded. Foreign/unmarked namespaces, learned-key state and retained ChaosEngines are preserved and reported. --no-wait and --force skip namespace cleanup; failures never trigger it.
-* Microsoft.ChaosStudio: namespace inspection requires AKS user credentials (Microsoft.ContainerService/managedClusters/listClusterUserCredential/action), kubelogin for Entra clusters, namespace get/delete and list access to every namespaced API kind. Current kube context and admin credentials aren't used. Cleanup has the chart hook's 210-second API budget and reports an error if namespace finalization doesn't complete. Engine-name reclamation and deleting the chaosengines CRD while engines remain aren't implemented.
-* Fix `az extension add --name k8s-extension` failing on 32-bit Windows installs of Azure CLI with "Cannot import 'maturin'". Newer `kubernetes` releases no longer require `google-auth` and `cryptography`, which has no 32-bit Windows wheels, so the pinned `kubernetes` and `oras` dependencies are relaxed to `kubernetes>=24.2.0,<36` and `oras>=0.2.25,<0.3`.
+* Microsoft.ChaosStudio: require confirmed raw synchronous extension deletion success even when the CLI progress helper suppresses a failed HTTP 404 poller result. An absent ARM extension does not imply namespace absence or resume Kubernetes cleanup.
+* Microsoft.ChaosStudio: the bounded installation namespace check uses AKS user credentials and namespace GET, not the current kube context or admin credentials. Uninstall adds no post-delete credential, inventory, namespace DELETE or finalization operation. Engine-name reclamation and deleting the chaosengines CRD while engines remain aren't implemented.
+* Microsoft.ChaosStudio: normalize fetched kubelogin exec users to the signed-in Azure CLI identity, and report namespace-inspection connection failures and timeouts with installation retry guidance rather than treating them as absence.
+* Fix extension installation on 32-bit Windows Azure CLI by allowing compatible Kubernetes and Oras dependency versions (``kubernetes>=24.2.0,<36`` and ``oras>=0.2.25,<0.3``) instead of requiring their older exact pins.
 
 1.9.4
 +++++++++++++++++++

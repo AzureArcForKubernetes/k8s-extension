@@ -6,6 +6,7 @@
 
 import base64
 import copy
+import json
 import time
 import unittest
 from types import SimpleNamespace
@@ -13,6 +14,7 @@ from unittest.mock import MagicMock, patch
 
 from azure.core.exceptions import HttpResponseError, ResourceNotFoundError, ServiceRequestError
 from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError, MaxRetryError, ReadTimeoutError
 from azure.cli.core.azclierror import AzureResponseError, InvalidArgumentValueError
 from azext_k8s_extension import custom
 from azext_k8s_extension.partner_extensions.ChaosStudio import ChaosStudio, _ClusterClient
@@ -206,6 +208,18 @@ class ChaosStudioTests(unittest.TestCase):
         self.assertFalse(any(event[0] in ("create", "update", "arm-put") for event in self.events))
         self.cluster.close.assert_called_once()
 
+    def test_namespace_transport_failure_keeps_install_phase_and_retry_guidance(self):
+        cluster = _ClusterClient.__new__(_ClusterClient)
+        cluster.client = MagicMock()
+        cluster.client.call_api.side_effect = MaxRetryError(None, "/api/v1/namespaces/chaos-infrastructure")
+        cluster.deadline = time.monotonic() + 210
+        self.partner._cluster_client_factory = lambda *_args: cluster
+        with self.assertRaisesRegex(
+                AzureResponseError, "Chaos namespace inspection failed.*rerun after correcting the error"):
+            self.run_install()
+        self.assertFalse(any(event[0] in ("create", "update", "arm-put") for event in self.events))
+        cluster.client.close.assert_called_once()
+
     def test_resumed_creation_preserves_namespace_assertion(self):
         self.client.fail_after_create = True
         with self.assertRaises(AzureResponseError):
@@ -236,62 +250,77 @@ class ChaosStudioTests(unittest.TestCase):
         final = self.run_install()
         self.assertNotIn(ChaosStudio.NAMESPACE_CREATED_KEY, final.configuration_settings)
 
-    def test_owned_namespace_cleanup_and_repeat(self):
-        extension = self.owned_namespace_extension()
-        namespace = {"metadata": {
-            "uid": "namespace-uid", "resourceVersion": "17",
-            "annotations": {ChaosStudio.NAMESPACE_OWNER: "chaos-infrastructure/chaos"},
-        }}
-        self.cluster.namespace.side_effect = [namespace, None]
-        self.cluster.inventory.return_value = []
-        for _ in range(2):
-            self.partner.PostDelete(self.cmd, "rg", "cluster", "chaos", extension)
-        self.cluster.request.assert_called_once_with(
-            "DELETE", "/api/v1/namespaces/chaos-infrastructure",
-            {"apiVersion": "v1", "kind": "DeleteOptions",
-             "preconditions": {"uid": "namespace-uid", "resourceVersion": "17"}},
-            allow_not_found=True,
-        )
-        self.cluster.wait_deleted.assert_called_once_with("chaos-infrastructure")
-
-    def test_foreign_and_unmarked_namespaces_survive(self):
-        for owner in (None, "chaos-infrastructure/other", "other/chaos"):
+    def test_post_delete_retains_namespaces_without_arm_or_cluster_access(self):
+        for owner in ("chaos-infrastructure/chaos", "chaos-infrastructure/other", None):
             with self.subTest(owner=owner):
                 self.cluster.reset_mock()
-                self.cluster.namespace.return_value = {"metadata": {"annotations": {
-                    ChaosStudio.NAMESPACE_OWNER: owner,
-                }}}
-                self.partner.PostDelete(self.cmd, "rg", "cluster", "chaos", self.owned_namespace_extension())
-                self.cluster.request.assert_not_called()
-                self.cluster.inventory.assert_not_called()
-
-    def test_remaining_customer_resources_and_runtime_state_are_reported(self):
-        resources = [
-            "chaosengines.litmuschaos.io/reservation", "configmaps/durable-broker-learned-keys",
-            "secrets/customer", "widgets.example.com/customer",
-        ]
-        self.cluster.namespace.return_value = {"metadata": {"annotations": {
-            ChaosStudio.NAMESPACE_OWNER: "chaos-infrastructure/chaos",
-        }}}
-        self.cluster.inventory.return_value = resources
-        with patch(PREFIX + "logger") as log:
-            self.partner.PostDelete(self.cmd, "rg", "cluster", "chaos", self.owned_namespace_extension())
-        self.cluster.request.assert_not_called()
-        self.assertEqual(log.warning.call_args.args[2], ", ".join(resources))
-
-    def test_inventory_and_delete_failure_are_not_success(self):
-        self.cluster.namespace.return_value = {"metadata": {
-            "uid": "uid", "resourceVersion": "1", "annotations": {
-                ChaosStudio.NAMESPACE_OWNER: "chaos-infrastructure/chaos",
-            },
-        }}
-        for failure in ("inventory", "request", "wait_deleted"):
-            with self.subTest(failure=failure):
-                self.cluster.reset_mock(side_effect=True)
+                self.cluster.namespace.return_value = {"metadata": {
+                    "uid": "namespace-uid", "resourceVersion": "17",
+                    "annotations": {ChaosStudio.NAMESPACE_OWNER: owner},
+                }}
                 self.cluster.inventory.return_value = []
-                getattr(self.cluster, failure).side_effect = AzureResponseError("failed " + failure)
-                with self.assertRaisesRegex(AzureResponseError, "failed " + failure):
+                with patch.object(self.partner, "_arm_client_factory") as arm_factory, \
+                        patch.object(self.partner, "_cluster_client_factory", return_value=self.cluster) as cluster, \
+                        patch(PREFIX + "logger") as log:
                     self.partner.PostDelete(self.cmd, "rg", "cluster", "chaos", self.owned_namespace_extension())
+                arm_factory.assert_not_called()
+                cluster.assert_not_called()
+                self.assertIn("retained", log.warning.call_args.args[0])
+
+    def test_post_delete_has_no_kubernetes_failure_or_mutation_to_resume(self):
+        extension = self.owned_namespace_extension()
+        with patch.object(self.partner, "_arm_client_factory",
+                          side_effect=AssertionError("ARM cleanup already completed")) as arm_factory, \
+                patch.object(self.partner, "_cluster_client_factory",
+                             side_effect=AzureResponseError("cluster inaccessible")) as cluster, \
+                patch(PREFIX + "logger") as log:
+            for _ in range(2):
+                self.partner.PostDelete(self.cmd, "rg", "cluster", "chaos", extension)
+        arm_factory.assert_not_called()
+        cluster.assert_not_called()
+        self.assertEqual(log.warning.call_count, 2)
+
+    def test_confirmed_arm_delete_and_404_retry_preserve_concurrent_customer_resources(self):
+        self.run_install()
+        get_existing = self.client.get
+        state = {"deleted": False, "resources": []}
+        poller = MagicMock()
+
+        def finish():
+            state["deleted"] = True
+            state["resources"] = ["secrets/customer-created-during-delete"]
+
+        def get(*args, **kwargs):
+            if state["deleted"]:
+                error = ResourceNotFoundError("extension already deleted")
+                error.status_code = 404
+                raise error
+            return get_existing(*args, **kwargs)
+
+        poller.result.side_effect = finish
+        with patch.object(self.client, "get", side_effect=get), \
+                patch.object(self.client, "begin_delete", create=True, return_value=poller) as begin, \
+                patch.object(self.partner, "_cluster_client_factory",
+                             side_effect=AzureResponseError("cluster inaccessible")) as cluster, \
+                patch("azext_k8s_extension.partner_extensions.DefaultExtension.DefaultExtension.Delete"), \
+                patch("azext_k8s_extension.custom.ExtensionFactory", return_value=self.partner), \
+                patch("azext_k8s_extension.custom.LongRunningOperation",
+                      return_value=lambda result: result.result()), \
+                patch(PREFIX + "logger") as log:
+            self.assertIsNone(custom.delete_k8s_extension(
+                self.cmd, self.client, "rg", "cluster", "chaos", "managedClusters", yes=True
+            ))
+            self.assertIsNone(custom.delete_k8s_extension(
+                self.cmd, self.client, "rg", "cluster", "chaos", "managedClusters", yes=True
+            ))
+        self.assertTrue(state["deleted"])
+        self.assertEqual(state["resources"], ["secrets/customer-created-during-delete"])
+        self.assertNotIn(CONNECTION, self.arm.resources)
+        self.assertFalse(any("/roleAssignments/" in key for key in self.arm.resources))
+        begin.assert_called_once()
+        self.assertEqual(poller.result.call_count, 2)
+        cluster.assert_not_called()
+        self.assertIn("retained", log.warning.call_args.args[0])
 
     def owned_namespace_extension(self):
         extension = self.prepare()
@@ -535,6 +564,99 @@ class ChaosStudioTests(unittest.TestCase):
                     subscription, "681440c1-3630-4424-a530-0305ac721cfd"))
                 self.assertFalse(any("/roleDefinitions/" in event[1]
                                      for event in self.events if event[0].startswith("arm-")))
+
+    def test_invalid_legacy_cleanup_id_is_rejected_before_install_writes(self):
+        for value in ("invalid-role", self.role_id(SUB2, ChaosStudio.ROLE_DEFINITION_GUID),
+                      self.role_id(SUB, "not-a-uuid")):
+            with self.subTest(value=value):
+                self.reset_resources()
+                with self.assertRaises(InvalidArgumentValueError):
+                    self.run_install(configuration_settings={
+                        "chaos-workspace-id": WORKSPACE, ChaosStudio.EXISTING_ROLE_KEY: value,
+                    })
+                self.assertFalse(any(event[0] in ("arm-put", "arm-delete", "create", "update")
+                                     for event in self.events))
+
+    def test_legacy_cleanup_id_cannot_be_added_or_changed_by_update(self):
+        role_id = self.role_id(SUB, "11111111-2222-3333-4444-555555555555")
+        other_role_id = self.role_id(SUB, "22222222-3333-4444-5555-666666666666")
+        for original in (None, role_id):
+            for requested in (other_role_id, "invalid-role"):
+                with self.subTest(original=original, requested=requested):
+                    self.reset_resources()
+                    settings = {"chaos-workspace-id": WORKSPACE}
+                    if original is not None:
+                        settings[ChaosStudio.EXISTING_ROLE_KEY] = original
+                    self.run_install(configuration_settings=settings)
+                    before = copy.deepcopy(self.client.extension.configuration_settings)
+                    self.events.clear()
+                    with self.assertRaises(InvalidArgumentValueError):
+                        self.partner.Update(self.cmd, "rg", "cluster", None, None, None, None,
+                                            {ChaosStudio.EXISTING_ROLE_KEY: requested}, {}, self.client.extension)
+                    self.assertEqual(self.client.extension.configuration_settings, before)
+                    self.assertFalse(any(event[0] in ("arm-put", "arm-delete", "create", "update")
+                                         for event in self.events))
+
+    def test_equivalent_legacy_cleanup_id_update_preserves_original_value(self):
+        role_id = self.role_id(SUB, "11111111-2222-3333-4444-555555555555")
+        self.run_install(configuration_settings={
+            "chaos-workspace-id": WORKSPACE, ChaosStudio.EXISTING_ROLE_KEY: role_id,
+        })
+        update = self.partner.Update(self.cmd, "rg", "cluster", None, None, None, None,
+                                     {ChaosStudio.EXISTING_ROLE_KEY: role_id.upper()}, {}, self.client.extension)
+        self.assertEqual(update.configuration_settings[ChaosStudio.EXISTING_ROLE_KEY], role_id)
+
+    def test_invalid_stored_legacy_cleanup_id_stops_delete_before_any_teardown(self):
+        for value in ("invalid-role", self.role_id(SUB2, ChaosStudio.ROLE_DEFINITION_GUID)):
+            with self.subTest(value=value):
+                self.reset_resources()
+                self.run_install()
+                self.client.extension.configuration_settings[ChaosStudio.EXISTING_ROLE_KEY] = value
+                before = copy.deepcopy(self.arm.resources)
+                self.events.clear()
+                with patch("azext_k8s_extension.partner_extensions.DefaultExtension.DefaultExtension.Delete"):
+                    with self.assertRaises(InvalidArgumentValueError):
+                        self.partner.Delete(self.cmd, self.client, "rg", "cluster", "chaos",
+                                            "managedClusters", "Microsoft.ContainerService", True)
+                self.assertEqual(self.arm.resources, before)
+                self.assertFalse(any(event[0] == "arm-delete" for event in self.events))
+
+    def test_pending_active_legacy_install_reconciles_role_after_success(self):
+        self.run_install()
+        builtin = next(key for key in self.arm.resources if "/roleAssignments/" in key)
+        legacy = self.arm.resources.pop(builtin)
+        legacy["properties"]["roleDefinitionId"] = self.role_id(SUB, ChaosStudio.ROLE_DEFINITION_GUID)
+        self.arm.resources[LEGACY_ASSIGNMENT] = copy.deepcopy(legacy)
+        self.client.extension.provisioning_state = "Updating"
+        self.client.next_states = ["Updating", "Succeeded"]
+        self.events.clear()
+        result = self.run_install()
+        self.assertEqual(result.provisioning_state, "Succeeded")
+        self.assertIn(builtin, self.arm.resources)
+        self.assertEqual(self.arm.resources[LEGACY_ASSIGNMENT], legacy)
+        self.assertEqual([event for event in self.events if event[0] == "arm-put"],
+                         [("arm-put", builtin)])
+        self.assertFalse(any(event[0] in ("create", "update", "arm-delete") for event in self.events))
+
+    def test_pending_active_legacy_install_never_grants_before_success(self):
+        for mode in ("no-wait", "failed"):
+            with self.subTest(mode=mode):
+                self.reset_resources()
+                self.run_install()
+                builtin = next(key for key in self.arm.resources if "/roleAssignments/" in key)
+                self.arm.resources[LEGACY_ASSIGNMENT] = self.arm.resources.pop(builtin)
+                self.client.extension.provisioning_state = "Updating"
+                self.client.next_states = ["Updating"] + (["Failed"] if mode == "failed" else [])
+                self.events.clear()
+                if mode == "failed":
+                    with self.assertRaises(AzureResponseError):
+                        self.run_install()
+                else:
+                    self.run_install(no_wait=True)
+                self.assertNotIn(builtin, self.arm.resources)
+                self.assertIn(LEGACY_ASSIGNMENT, self.arm.resources)
+                self.assertFalse(any(event[0] in ("arm-put", "arm-delete", "create", "update")
+                                     for event in self.events))
 
     def test_existing_installs_add_builtin_and_preserve_legacy_until_delete(self):
         for mode in ("create", "update"):
@@ -890,6 +1012,60 @@ class ClusterNamespaceTests(unittest.TestCase):
         cluster.close()
         load.return_value.close.assert_called_once()
 
+    def test_fetched_kubelogin_exec_users_use_azure_cli_identity(self):
+        for command, login in (
+                ("kubelogin", ["--login", "devicecode"]),
+                ("kubelogin.exe", ["-l", "interactive"]),
+                ("kubelogin", ["--login=spn"]),
+                ("kubelogin", ["-ldevicecode"]),
+                ("kubelogin", []),
+                ("kubelogin", ["--login", "devicecode", "-l", "msi"])):
+            with self.subTest(command=command, login=login):
+                arguments = ["get-token", "--server-id", CLIENT, "--tenant-id", TENANT]
+                kubeconfig = {
+                    "apiVersion": "v1",
+                    "current-context": "target",
+                    "users": [
+                        {"name": "target", "user": {"exec": {
+                            "apiVersion": "client.authentication.k8s.io/v1beta1",
+                            "command": command,
+                            "args": arguments + login,
+                            "env": [{"name": "EXAMPLE", "value": "preserved"}],
+                        }}},
+                        {"name": "certificate-user", "user": {
+                            "client-certificate-data": "fixture",
+                            "client-key-data": "fixture",
+                            "exec": None,
+                        }},
+                        {"name": "other-exec-user", "user": {"exec": {
+                            "command": "other-credential-helper", "args": ["--login", "unchanged"],
+                        }}},
+                    ],
+                }
+                expected = copy.deepcopy(kubeconfig)
+                expected["users"][0]["user"]["exec"]["args"] = arguments + ["--login", "azurecli"]
+                arm = MagicMock(subscription_id=SUB)
+                arm.post.return_value = {"kubeconfigs": [{
+                    "value": base64.b64encode(json.dumps(kubeconfig).encode("utf-8")).decode("ascii"),
+                }]}
+                with patch(PREFIX + "config.new_client_from_config_dict") as load:
+                    cluster = _ClusterClient(None, arm, "rg", "cluster")
+                load.assert_called_once_with(expected)
+                cluster.close()
+                load.return_value.close.assert_called_once()
+
+    def test_fetched_kubelogin_login_requires_a_value(self):
+        arm = MagicMock(subscription_id=SUB)
+        arm.post.return_value = {"kubeconfigs": [{
+            "value": base64.b64encode(json.dumps({"users": [{"user": {"exec": {
+                "command": "kubelogin", "args": ["get-token", "--login"],
+            }}}]}).encode("utf-8")).decode("ascii"),
+        }]}
+        with patch(PREFIX + "config.new_client_from_config_dict") as load:
+            with self.assertRaisesRegex(AzureResponseError, "kubelogin login value"):
+                _ClusterClient(None, arm, "rg", "cluster")
+        load.assert_not_called()
+
     def test_only_404_is_absence(self):
         for status in (404, 403, 401, 500):
             self.cluster.client.call_api.side_effect = ApiException(status=status)
@@ -902,140 +1078,24 @@ class ClusterNamespaceTests(unittest.TestCase):
         self.cluster.client.call_api.return_value = {"metadata": {"name": "chaos"}}
         self.assertEqual(self.cluster.namespace("chaos")["metadata"]["name"], "chaos")
 
-    def test_discovery_pagination_includes_secrets_configmaps_and_custom_kinds(self):
-        def resource(name):
-            return {"name": name, "namespaced": True, "verbs": ["list"]}
-
-        responses = {
-            "/api": {"versions": ["v1"]},
-            "/apis": {"groups": [{"name": "example.com",
-                                  "preferredVersion": {"groupVersion": "example.com/v1"},
-                                  "versions": [{"groupVersion": "example.com/v1"},
-                                               {"groupVersion": "example.com/v2"}]}]},
-            "/api/v1": {"resources": [resource("secrets"), resource("configmaps"),
-                                      resource("pods/status"),
-                                      {"name": "bindings", "namespaced": True, "verbs": ["create"]}]},
-            "/apis/example.com/v1": {"resources": [resource("widgets")]},
-            "/apis/example.com/v2": {"resources": [resource("widgets"), resource("otherwidgets")]},
-        }
-
-        def request(_method, path):
-            if path in responses:
-                return responses[path]
-            if "continue=next" in path:
-                return {"items": [{"metadata": {"name": "second"}}], "metadata": {}}
-            return {"items": [{"metadata": {"name": "first"}}], "metadata": {"continue": "next"}}
-
-        self.cluster.request = MagicMock(side_effect=request)
-        actual = self.cluster.inventory("chaos")
-        self.assertEqual(actual, sorted([
-            resource + "/" + name
-            for resource in ("secrets", "configmaps", "widgets.example.com", "otherwidgets.example.com")
-            for name in ("first", "second")
-        ]))
-        calls = [call.args[1] for call in self.cluster.request.call_args_list]
-        self.assertTrue(any("/secrets?limit=100&continue=next" in path for path in calls))
-        self.assertFalse(any("pods/status?" in path for path in calls))
-        self.assertFalse(any("/bindings?" in path for path in calls))
-        self.assertFalse(any("/example.com/v2/namespaces/chaos/widgets?" in path for path in calls))
-
-    def test_namespace_events_do_not_block_cleanup_but_customer_state_does(self):
-        def resource(name):
-            return {"name": name, "namespaced": True, "verbs": ["list"]}
-
-        responses = {
-            "/api": {"versions": ["v1"]},
-            "/apis": {"groups": [
-                {"name": group, "preferredVersion": {"groupVersion": group + "/v1"},
-                 "versions": [{"groupVersion": group + "/v1"}]}
-                for group in ("events.k8s.io", "example.com")
-            ]},
-            "/api/v1": {"resources": [resource("events"), resource("configmaps")]},
-            "/apis/events.k8s.io/v1": {"resources": [resource("events")]},
-            "/apis/example.com/v1": {"resources": [resource("events")]},
-        }
-
-        def request(_method, path):
-            if path in responses:
-                return responses[path]
-            if "/configmaps?" in path:
-                return {"items": [{"metadata": {"name": "durable-broker-learned-keys"}}]}
-            return {"items": [{"metadata": {"name": "retained-event"}}]}
-
-        self.cluster.request = MagicMock(side_effect=request)
-        self.assertEqual(self.cluster.inventory("chaos"), [
-            "configmaps/durable-broker-learned-keys", "events.example.com/retained-event",
-        ])
-        calls = [call.args[1] for call in self.cluster.request.call_args_list]
-        self.assertTrue(any("/api/v1/namespaces/chaos/events?" in path for path in calls))
-        self.assertTrue(any("/apis/events.k8s.io/v1/namespaces/chaos/events?" in path for path in calls))
-
-    def test_readable_kind_without_list_is_not_treated_as_empty(self):
-        self.cluster.request = MagicMock(side_effect=[
-            {"versions": ["v1"]}, {"groups": []},
-            {"resources": [{"name": "widgets", "namespaced": True, "verbs": ["get", "create"]}]},
-        ])
-        with self.assertRaisesRegex(AzureResponseError, "Cannot inventory"):
-            self.cluster.inventory("chaos")
-
-    def test_inventory_failure_never_proves_empty(self):
-        responses = [
-            {"versions": ["v1"]}, {"groups": []},
-            {"resources": [{"name": "secrets", "namespaced": True, "verbs": ["list"]}]},
-            AzureResponseError("secrets forbidden"),
-        ]
-        self.cluster.request = MagicMock(side_effect=responses)
-        with self.assertRaisesRegex(AzureResponseError, "secrets forbidden"):
-            self.cluster.inventory("chaos")
-        self.assertEqual(self.cluster.request.call_count, 4)
-
-    def test_controller_defaults_require_positive_unmodified_ownership(self):
-        for kind, name in (("serviceaccounts", "default"), ("configmaps", "kube-root-ca.crt")):
-            with self.subTest(kind=kind):
-                obj = {"metadata": {"name": name, "managedFields": [{"manager": "kube-controller-manager"}]},
-                       "data": {"ca.crt": "synthetic-ca"}}
-                self.assertTrue(_ClusterClient._namespace_default("", kind, obj))
-                changed = copy.deepcopy(obj)
-                changed["metadata"]["managedFields"].append({"manager": "kubectl"})
-                self.assertFalse(_ClusterClient._namespace_default("", kind, changed))
-                changed["metadata"].pop("managedFields")
-                self.assertEqual(_ClusterClient._namespace_default("", kind, changed), kind == "serviceaccounts")
-                obj["metadata"]["finalizers"] = ["customer"]
-                self.assertFalse(_ClusterClient._namespace_default("", kind, obj))
-        secret = {"metadata": {"name": "default", "managedFields": [{"manager": "kube-controller-manager"}]}}
-        self.assertFalse(_ClusterClient._namespace_default("", "secrets", secret))
-        secret["data"] = {"ca.crt": "synthetic-ca", "customer": "preserve"}
-        secret["metadata"]["name"] = "kube-root-ca.crt"
-        self.assertFalse(_ClusterClient._namespace_default("", "configmaps", secret))
-        for field, value in (("secrets", [{"name": "customer"}]),
-                             ("imagePullSecrets", [{"name": "customer"}]),
-                             ("automountServiceAccountToken", False)):
-            service_account = {
-                "metadata": {"name": "default", "managedFields": [{"manager": "kube-controller-manager"}]},
-                field: value,
-            }
-            self.assertFalse(_ClusterClient._namespace_default("", "serviceaccounts", service_account))
-
-    def test_aks_default_serviceaccount_without_managed_fields_preserves_customer_metadata(self):
-        service_account = {"apiVersion": "v1", "kind": "ServiceAccount", "metadata": {"name": "default"}}
-        self.assertTrue(_ClusterClient._namespace_default("", "serviceaccounts", service_account))
-        for field, value in (("annotations", {"customer": "value"}), ("labels", {"customer": "value"}),
-                             ("ownerReferences", [{"uid": "customer"}])):
-            with self.subTest(field=field):
-                changed = copy.deepcopy(service_account)
-                changed["metadata"][field] = value
-                self.assertFalse(_ClusterClient._namespace_default("", "serviceaccounts", changed))
-
-    def test_deadline_is_explicit_failure_and_namespace_finalization_is_observed(self):
+    def test_namespace_inspection_deadline_is_explicit_failure(self):
         self.cluster.deadline = 0
         with self.assertRaisesRegex(AzureResponseError, "budget"):
             self.cluster.namespace("chaos")
         self.cluster.client.call_api.assert_not_called()
-        self.cluster.namespace = MagicMock(side_effect=[{"metadata": {"name": "chaos"}}, None])
-        with patch(PREFIX + "time.sleep") as sleep:
-            self.cluster.wait_deleted("chaos")
-        self.assertEqual(self.cluster.namespace.call_count, 2)
-        sleep.assert_called_once_with(1)
+
+    def test_namespace_transport_failures_are_errors_not_absence(self):
+        transport = HTTPError("API server unreachable")
+        transport.status = 404
+        for error in (
+                transport,
+                MaxRetryError(None, "/api/v1/namespaces/chaos"),
+                ReadTimeoutError(None, "/api/v1/namespaces/chaos", "API server read timed out")):
+            with self.subTest(error=type(error).__name__):
+                self.cluster.client.call_api.side_effect = error
+                with self.assertRaisesRegex(AzureResponseError, "namespace inspection was not confirmed") as raised:
+                    self.cluster.namespace("chaos")
+                self.assertIs(raised.exception.__cause__, error)
 
 
 if __name__ == "__main__":

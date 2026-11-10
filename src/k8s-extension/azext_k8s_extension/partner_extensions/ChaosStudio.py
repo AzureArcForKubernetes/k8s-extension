@@ -15,6 +15,7 @@ from urllib.parse import quote, urlencode, urlsplit
 import yaml
 from kubernetes import config
 from kubernetes.client.exceptions import ApiException
+from urllib3.exceptions import HTTPError
 
 from azure.core.exceptions import AzureError, ResourceNotFoundError
 from azure.core.pipeline.policies import RetryPolicy
@@ -121,10 +122,22 @@ class _ClusterClient:
         configs = credentials.get("kubeconfigs", [])
         if len(configs) != 1 or not configs[0].get("value"):
             raise AzureResponseError("AKS did not return exactly one user kubeconfig.")
-        self.client = config.new_client_from_config_dict(
-            yaml.safe_load(base64.b64decode(configs[0]["value"]).decode("utf-8"))
-        )
-        # Same API budget as the chart uninstall hook; cleanup never waits indefinitely.
+        kubeconfig = yaml.safe_load(base64.b64decode(configs[0]["value"]).decode("utf-8"))
+        for user in kubeconfig.get("users", []):
+            exec_config = user.get("user", {}).get("exec") or {}
+            if exec_config.get("command") not in ("kubelogin", "kubelogin.exe"):
+                continue
+            arguments = []
+            existing = iter(exec_config.get("args", []))
+            for argument in existing:
+                if argument in ("--login", "-l"):
+                    if next(existing, None) is None:
+                        raise AzureResponseError("AKS user kubeconfig is missing a kubelogin login value.")
+                elif not argument.startswith(("--login=", "-l")):
+                    arguments.append(argument)
+            exec_config["args"] = arguments + ["--login", "azurecli"]
+        self.client = config.new_client_from_config_dict(kubeconfig)
+        # Keep the installation namespace check bounded.
         self.deadline = time.monotonic() + 210
 
     def close(self):
@@ -133,93 +146,22 @@ class _ClusterClient:
     def request(self, method, path, body=None, allow_not_found=False):
         remaining = self.deadline - time.monotonic()
         if remaining <= 0:
-            raise AzureResponseError("Namespace cleanup exceeded its 210-second API budget.")
+            raise AzureResponseError("Namespace inspection exceeded its 210-second API budget.")
         try:
             return self.client.call_api(
                 path, method, body=body, response_type="object",
                 auth_settings=["BearerToken"], _return_http_data_only=True,
                 _request_timeout=min(30, remaining),
             )
-        except ApiException as error:
-            if allow_not_found and error.status == 404:
+        except (ApiException, HTTPError) as error:
+            if allow_not_found and isinstance(error, ApiException) and error.status == 404:
                 return None
             raise AzureResponseError(
-                "Target-cluster {} {} failed; namespace cleanup was not confirmed: {}".format(method, path, error)
+                "Target-cluster {} {} failed; namespace inspection was not confirmed: {}".format(method, path, error)
             ) from error
 
     def namespace(self, name):
         return self.request("GET", "/api/v1/namespaces/" + quote(name, safe=""), allow_not_found=True)
-
-    def wait_deleted(self, name):
-        while self.namespace(name) is not None:
-            time.sleep(1)
-
-    def inventory(self, namespace):
-        # Discover every served version, not just core kinds or kubectl's 'all'.
-        versions = [("/api/" + version, "") for version in self.request("GET", "/api")["versions"]]
-        for group in self.request("GET", "/apis")["groups"]:
-            preferred = group["preferredVersion"]["groupVersion"]
-            ordered = [preferred] + [v["groupVersion"] for v in group["versions"]
-                                     if v["groupVersion"] != preferred]
-            versions.extend(("/apis/" + version, group["name"]) for version in ordered)
-        seen = set()
-        remaining = []
-        for base, group in versions:
-            for resource in self.request("GET", base)["resources"]:
-                key = (group, resource["name"])
-                if not resource["namespaced"] or "/" in resource["name"] or key in seen:
-                    continue
-                seen.add(key)
-                if "list" not in resource["verbs"]:
-                    # Bindings and access reviews are create-only APIs, not stored collections.
-                    if set(resource["verbs"]) == {"create"}:
-                        continue
-                    raise AzureResponseError("Cannot inventory namespaced kind '{}'.".format(key))
-                path = base + "/namespaces/" + quote(namespace, safe="") + "/" + resource["name"]
-                continuation = ""
-                tokens = set()
-                while True:
-                    page = self.request("GET", path + "?" + urlencode({"limit": 100, "continue": continuation}))
-                    for obj in page["items"]:
-                        if not self._namespace_default(group, resource["name"], obj):
-                            remaining.append("{}/{}".format(
-                                resource["name"] + ("." + group if group else ""), obj["metadata"]["name"]
-                            ))
-                    continuation = page.get("metadata", {}).get("continue", "")
-                    if not continuation:
-                        break
-                    if continuation in tokens:
-                        raise AzureResponseError("Repeated Kubernetes inventory continuation token.")
-                    tokens.add(continuation)
-        return sorted(remaining)
-
-    @staticmethod
-    def _namespace_default(group, resource, obj):
-        if resource == "events" and group in ("", "events.k8s.io"):
-            return True
-        metadata = obj["metadata"]
-        if group or (resource, metadata["name"]) not in (
-            ("serviceaccounts", "default"), ("configmaps", "kube-root-ca.crt")
-        ):
-            return False
-        # Namespace controllers inject these into every namespace. AKS can omit
-        # managedFields on the default ServiceAccount; it must still be pristine.
-        managers = {entry["manager"] for entry in metadata.get("managedFields", [])}
-        controller_default = managers == {"kube-controller-manager"}
-        if resource == "serviceaccounts":
-            controller_default = (
-                managers <= {"kube-controller-manager"}
-                and not metadata.get("annotations")
-                and not metadata.get("labels")
-                and not metadata.get("ownerReferences")
-            )
-        return (controller_default
-                and not metadata.get("finalizers")
-                and not obj.get("secrets")
-                and not obj.get("imagePullSecrets")
-                and obj.get("automountServiceAccountToken") is None
-                and not obj.get("binaryData")
-                and (resource != "configmaps" or set(obj.get("data", {})) == {"ca.crt"}))
 
 
 class ChaosStudio(DefaultExtension):
@@ -402,6 +344,10 @@ class ChaosStudio(DefaultExtension):
         """Bootstrap and activate one extension; persisted ARM state is the resume record."""
         args = (resource_group_name, cluster_rp, cluster_type, cluster_name, name)
         arm = self._arm_client_factory(cmd)
+        if self.EXISTING_ROLE_KEY in extension.configuration_settings:
+            self._legacy_role_id(
+                extension.configuration_settings[self.EXISTING_ROLE_KEY], arm.subscription_id
+            )
         cluster_id = self._cluster_resource_id(arm.subscription_id, resource_group_name, cluster_name)
         extension_id = "{}/providers/Microsoft.KubernetesConfiguration/extensions/{}".format(cluster_id, name)
         workspace_id = extension.configuration_settings["subscriber.workspaceId"]
@@ -426,6 +372,10 @@ class ChaosStudio(DefaultExtension):
                                  "Chaos Studio workspace connection", allow_not_found=True)
             if existing is not None:
                 self._validate_existing(existing, extension, cluster_id)
+                if self.EXISTING_ROLE_KEY in existing.configuration_settings:
+                    self._legacy_role_id(
+                        existing.configuration_settings[self.EXISTING_ROLE_KEY], arm.subscription_id
+                    )
                 stage = self._stage(existing)
                 if stage == "true":
                     self._check_active_connection(existing, connection, workspace_id, cluster_id)
@@ -441,6 +391,11 @@ class ChaosStudio(DefaultExtension):
                             return existing
                         final = self._wait_existing(cmd, client, args)
                         self._check_active_connection(final, connection, workspace_id, cluster_id)
+                        self._reconcile_workspace_role(
+                            arm, workspace_id, self._prerequisite_resource_ids(
+                                arm.subscription_id, resource_group_name, cluster_name, cluster_id
+                            ),
+                        )
                         return final
                 elif self._state(existing) not in ("succeeded", "failed", "canceled", "cancelled"):
                     existing = self._wait_existing(cmd, client, args)
@@ -602,6 +557,19 @@ class ChaosStudio(DefaultExtension):
         original_settings = dict(
             getattr(original_extension, "configuration_settings", None) or {}
         )
+        arm = self._arm_client_factory(cmd)
+        for values in (original_settings, supplied_settings):
+            if self.EXISTING_ROLE_KEY in values:
+                self._legacy_role_id(values[self.EXISTING_ROLE_KEY], arm.subscription_id)
+        if self.EXISTING_ROLE_KEY in supplied_settings:
+            if not self._same_resource_id(
+                supplied_settings[self.EXISTING_ROLE_KEY], original_settings.get(self.EXISTING_ROLE_KEY)
+            ):
+                raise InvalidArgumentValueError(
+                    "'chaos-existing-role-definition-id' is immutable legacy cleanup state; "
+                    "it cannot be added or changed on an installed extension."
+                )
+            supplied_settings.pop(self.EXISTING_ROLE_KEY)
         configuration_settings = dict(original_settings)
         configuration_settings.update(supplied_settings)
         release_namespace = self._existing_release_namespace(
@@ -622,7 +590,6 @@ class ChaosStudio(DefaultExtension):
             original_settings,
         )
         if workspace_id is not None:
-            arm = self._arm_client_factory(cmd)
             cluster_id = self._cluster_resource_id(arm.subscription_id, resource_group_name, cluster_name)
             connection = arm.get(
                 "{}/connections/{}".format(workspace_id, self._recommended_connection_name(workspace_id, cluster_id)),
@@ -684,47 +651,13 @@ class ChaosStudio(DefaultExtension):
         )
 
     def PostDelete(self, cmd, resource_group_name, cluster_name, name, extension):
-        """Run only after the extension delete poller confirms completion."""
-        settings = extension.configuration_settings or {}
-        namespace = self._existing_release_namespace(extension, settings)
-        if settings.get(self.NAMESPACE_CREATED_KEY) != "true":
-            logger.warning("Namespace '%s' retained: installation did not record namespace creation.", namespace)
-            return
-        if namespace == "default" or namespace.startswith("kube-"):
-            logger.warning("Namespace '%s' retained: system namespace.", namespace)
-            return
-        arm = self._arm_client_factory(cmd)
-        cluster = self._cluster_client_factory(cmd, arm, resource_group_name, cluster_name)
-        try:
-            current = cluster.namespace(namespace)
-            if current is None:
-                logger.warning("Namespace '%s' is already absent.", namespace)
-                return
-            owner = current["metadata"].get("annotations", {}).get(self.NAMESPACE_OWNER)
-            if owner != namespace + "/" + name:
-                logger.warning("Namespace '%s' retained: missing or foreign creation marker (%s).", namespace, owner)
-                return
-            remaining = cluster.inventory(namespace)
-            if remaining:
-                logger.warning(
-                    "Namespace '%s' retained: resources remain: %s. "
-                    "Stopped ChaosEngines are durable name reservations; their CRD is retained while any remain. "
-                    "Unmarked learned-key/runtime state is never adopted or erased.",
-                    namespace, ", ".join(remaining),
-                )
-                return
-            cluster.request("DELETE", "/api/v1/namespaces/" + quote(namespace, safe=""), {
-                "apiVersion": "v1", "kind": "DeleteOptions",
-                "preconditions": {key: current["metadata"][key] for key in ("uid", "resourceVersion")},
-            }, allow_not_found=True)
-            cluster.wait_deleted(namespace)
-            logger.warning(
-                "Owned namespace '%s' removed. "
-                "Stopped ChaosEngines in other target namespaces and their CRD are not reclaimed.",
-                namespace,
-            )
-        finally:
-            cluster.close()
+        """Report retention after confirmed ARM deletion; do not mutate Kubernetes."""
+        logger.warning(
+            "ARM extension '%s' deletion completed. Its release namespace and any "
+            "remaining Kubernetes resources are retained; automatic namespace removal "
+            "is not performed by the CLI.",
+            name,
+        )
 
     def _reconcile_prerequisites(
         self,
@@ -981,6 +914,9 @@ class ChaosStudio(DefaultExtension):
         self._stage(extension)
         if self._state(extension) not in ("succeeded", "failed", "canceled", "cancelled"):
             raise InvalidArgumentValueError("Wait for the extension operation before deleting workspace resources.")
+        arm = self._arm_client_factory(cmd)
+        if self.EXISTING_ROLE_KEY in settings:
+            self._legacy_role_id(settings[self.EXISTING_ROLE_KEY], arm.subscription_id)
         workspace_id = settings.get("subscriber.workspaceId")
         managed_keys = (
             "subscriber.workspaceId",
@@ -1003,7 +939,6 @@ class ChaosStudio(DefaultExtension):
                 "was not deleted.".format(", ".join(missing))
             )
 
-        arm = self._arm_client_factory(cmd)
         cluster_id = self._cluster_resource_id(
             arm.subscription_id, resource_group_name, cluster_name
         )
