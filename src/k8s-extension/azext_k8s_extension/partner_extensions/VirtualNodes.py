@@ -142,16 +142,20 @@ class VirtualNodes(DefaultExtension):
 
         extension = client.get(resource_group_name, cluster_rp, cluster_type, cluster_name, name)
         name = extension.name if extension.name else name
+        # Helm uses a lowercase release name even when the Azure extension name is mixed-case.
+        release_name = name.lower()
         scope = extension.scope.cluster if extension.scope else None
         namespace = scope.release_namespace if scope and scope.release_namespace else RELEASE_NAMESPACE
-        infra_name = (name if "virtualnode" in name else name + "-virtualnode")[:63].rstrip("-")
+        infra_name = (
+            release_name if "virtualnode" in release_name else release_name + "-virtualnode"
+        )[:63].rstrip("-")
 
         with _kubernetes_client(cmd, resource_group_name, cluster_name) as (core, apps):
             owned = [
                 sts for sts in apps.list_stateful_set_for_all_namespaces(
-                    label_selector=f"app.kubernetes.io/instance={name}", _request_timeout=30
+                    label_selector=f"app.kubernetes.io/instance={release_name}", _request_timeout=30
                 ).items
-                if (sts.metadata.annotations or {}).get("meta.helm.sh/release-name") == name
+                if (sts.metadata.annotations or {}).get("meta.helm.sh/release-name") == release_name
                 and (sts.metadata.annotations or {}).get("meta.helm.sh/release-namespace") == namespace
             ]
             if len(owned) > 1:

@@ -117,6 +117,45 @@ class VirtualNodesDeleteTest(unittest.TestCase):
                 self.client.begin_delete.assert_called_once()
         self.core.list_pod_for_all_namespaces.assert_not_called()
 
+    def test_mixed_case_azure_name_matches_lowercase_helm_release(self):
+        azure_name = "testExtAndHelm"
+        release_name = "testextandhelm"
+        node = release_name + "-virtualnode-0"
+        self.client.get.return_value.name = azure_name
+        self.sts.metadata.name = release_name + "-virtualnode"
+        self.sts.metadata.annotations["meta.helm.sh/release-name"] = release_name
+        self.nodes = {node: virtual_node(node)}
+        self.pods[node] = [SimpleNamespace(metadata=metadata("workload", namespace="customer"))]
+        self.apps.list_stateful_set_for_all_namespaces.side_effect = lambda label_selector, **_: SimpleNamespace(
+            items=[self.sts] if self.sts and label_selector == f"app.kubernetes.io/instance={release_name}" else []
+        )
+
+        def delete():
+            return custom.delete_k8s_extension(
+                self.cmd, self.client, "rg", "cluster", azure_name, "managedClusters", yes=True
+            )
+
+        with self.assertRaisesRegex(CLIError, f"customer/workload on Node {node}"):
+            delete()
+        self.client.begin_delete.assert_not_called()
+
+        statefulset = self.sts
+        self.sts = None
+        with self.assertRaisesRegex(CLIError, "Cannot establish ownership"):
+            delete()
+        self.client.begin_delete.assert_not_called()
+
+        self.sts = statefulset
+        self.pods.clear()
+        delete()
+        self.apps.list_stateful_set_for_all_namespaces.assert_called_with(
+            label_selector=f"app.kubernetes.io/instance={release_name}", _request_timeout=30
+        )
+        self.client.get.assert_called_with("rg", "Microsoft.ContainerService", "managedClusters", "cluster", azure_name)
+        self.client.begin_delete.assert_called_once_with(
+            "rg", "Microsoft.ContainerService", "managedClusters", "cluster", azure_name, force_delete=False
+        )
+
     def test_flags_keep_existing_sdk_behavior_after_pod_check(self):
         for no_wait, force in ((True, False), (False, True), (True, True)):
             with self.subTest(no_wait=no_wait, force=force):
