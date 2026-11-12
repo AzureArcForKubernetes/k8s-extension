@@ -2,6 +2,12 @@
 
 Release History
 ===============
+2.0.0
++++++++++++++++++++
+* Microsoft.virtualnodes: block deletion while any Pod objects, including completed or terminating Pods, remain assigned to the extension's virtual Nodes. 
+* Microsoft.virtualnodes: deletion now requires AKS user credentials (Microsoft.ContainerService/managedClusters/listClusterUserCredential/action), connectivity to the Kubernetes API, kubelogin for Entra clusters, and Kubernetes authorization to list Nodes, StatefulSets across namespaces, and Pods across namespaces.
+* Microsoft.virtualnodes: normalize Helm release names to lowercase during uninstall checks so mixed-case Azure extension names cannot bypass assigned-Pod checks. 
+
 1.9.5
 +++++++++++++++++++
 * Microsoft.ChaosStudio: assign the built-in Chaos Kubernetes Extension Operator role instead of provisioning or validating custom roles. Create and update add a separate built-in assignment; existing owned legacy assignments stay until uninstall to avoid interrupting authorization during migration. Delete removes both owned assignments but never role definitions.
