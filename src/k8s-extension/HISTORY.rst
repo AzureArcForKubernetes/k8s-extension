@@ -4,6 +4,7 @@ Release History
 ===============
 1.9.6
 +++++++++++++++++++
+* Microsoft.KubernetesInventory.Sync: pass ``importGrafana=true`` and ``grafanaResourceId=<Azure Managed Grafana resource ID>`` in ``configuration-settings`` to import the Grafana dashboards packaged in that version's Helm chart 
 * Microsoft.virtualnodes: block deletion while any Pod objects, including completed or terminating Pods, remain assigned to the extension's virtual Nodes. 
 * Microsoft.virtualnodes: deletion now requires AKS user credentials (Microsoft.ContainerService/managedClusters/listClusterUserCredential/action), connectivity to the Kubernetes API, kubelogin for Entra clusters, and Kubernetes authorization to list Nodes, StatefulSets across namespaces, and Pods across namespaces.
 * Microsoft.virtualnodes: normalize Helm release names to lowercase during uninstall checks so mixed-case Azure extension names cannot bypass assigned-Pod checks. 
