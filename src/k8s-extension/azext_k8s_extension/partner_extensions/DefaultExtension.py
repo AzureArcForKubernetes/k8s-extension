@@ -72,12 +72,9 @@ class DefaultExtension(PartnerExtensionModel):
                 product=plan_product
             )
 
+        grafana_resource_id = None
         if KubernetesInventorySync.is_kubernetes_inventory_sync(extension_type):
             grafana_resource_id = KubernetesInventorySync.take_grafana_import_settings(configuration_settings)
-            if grafana_resource_id:
-                chart_version = version or KubernetesInventorySync.latest_registered_version(
-                    cmd, resource_group_name, cluster_rp, cluster_type, cluster_name, release_train)
-                KubernetesInventorySync.import_grafana_dashboards(cmd, grafana_resource_id, chart_version)
 
         create_identity = True
         extension = Extension(
@@ -91,6 +88,13 @@ class DefaultExtension(PartnerExtensionModel):
             configuration_protected_settings=configuration_protected_settings,
             plan=plan
         )
+
+        if grafana_resource_id:
+            # Dashboards are overwritten, so reject an invalid request before importing anything.
+            KubernetesInventorySync.validate_create_request(extension)
+            chart_version = version or KubernetesInventorySync.latest_registered_version(
+                cmd, resource_group_name, cluster_rp, cluster_type, cluster_name, release_train)
+            KubernetesInventorySync.import_grafana_dashboards(cmd, grafana_resource_id, chart_version)
         return extension, name, create_identity
 
     def Update(
@@ -110,13 +114,11 @@ class DefaultExtension(PartnerExtensionModel):
         """Default validations & defaults for Update
         Must create and return a valid 'PatchExtension' object.
         """
+        grafana_resource_id = None
         if KubernetesInventorySync.is_kubernetes_inventory_sync(original_extension.extension_type):
             grafana_resource_id = KubernetesInventorySync.take_grafana_import_settings(configuration_settings)
-            if grafana_resource_id:
-                chart_version = version or original_extension.version or original_extension.current_version
-                KubernetesInventorySync.import_grafana_dashboards(cmd, grafana_resource_id, chart_version)
 
-        return PatchExtension(
+        patch = PatchExtension(
             auto_upgrade_minor_version=auto_upgrade_minor_version,
             auto_upgrade_mode=auto_upgrade_mode,
             release_train=release_train,
@@ -124,6 +126,13 @@ class DefaultExtension(PartnerExtensionModel):
             configuration_settings=configuration_settings,
             configuration_protected_settings=configuration_protected_settings,
         )
+
+        if grafana_resource_id:
+            # Dashboards are overwritten, so reject an invalid request before importing anything.
+            KubernetesInventorySync.validate_update_request(patch)
+            chart_version = version or original_extension.version or original_extension.current_version
+            KubernetesInventorySync.import_grafana_dashboards(cmd, grafana_resource_id, chart_version)
+        return patch
 
     def Delete(
         self, cmd, client, resource_group_name, cluster_name, name, cluster_type, cluster_rp, yes

@@ -95,6 +95,27 @@ def latest_registered_version(cmd, resource_group_name, cluster_rp, cluster_type
     )
 
 
+def validate_create_request(extension):
+    """Runs create's common argument validation, which custom.py otherwise runs after Create returns."""
+    _custom_validator("__validate_version_and_auto_upgrade")(
+        extension.version, extension.auto_upgrade_minor_version, extension.auto_upgrade_mode)
+    _custom_validator("__validate_auto_upgrade_mode")(
+        extension.auto_upgrade_minor_version, extension.auto_upgrade_mode)
+    _custom_validator("__validate_scope_after_customization")(extension.scope)
+
+
+def validate_update_request(patch):
+    """Runs update's common argument validation, which custom.py otherwise runs after Update returns."""
+    _custom_validator("__validate_auto_upgrade_mode")(patch.auto_upgrade_minor_version, patch.auto_upgrade_mode)
+
+
+def _custom_validator(name):
+    # custom.py imports the partner extensions, so it's imported lazily. The validators are looked up
+    # by name so their double-underscore names aren't mangled and the rules stay defined once.
+    from .. import custom
+    return getattr(custom, name)
+
+
 def import_grafana_dashboards(cmd, grafana_resource_id, version):
     """Imports the dashboards packaged in ``version`` of the chart into the Grafana workspace."""
     _require_amg_extension()
