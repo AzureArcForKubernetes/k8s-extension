@@ -2,7 +2,7 @@
 
 Release History
 ===============
-2.0.0
+1.9.6
 +++++++++++++++++++
 * Microsoft.virtualnodes: block deletion while any Pod objects, including completed or terminating Pods, remain assigned to the extension's virtual Nodes. 
 * Microsoft.virtualnodes: deletion now requires AKS user credentials (Microsoft.ContainerService/managedClusters/listClusterUserCredential/action), connectivity to the Kubernetes API, kubelogin for Entra clusters, and Kubernetes authorization to list Nodes, StatefulSets across namespaces, and Pods across namespaces.
