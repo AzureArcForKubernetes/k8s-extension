@@ -16,6 +16,7 @@ from ..vendored_sdks.models import Scope
 from ..vendored_sdks.models import Plan
 
 from .PartnerExtensionModel import PartnerExtensionModel
+from . import KubernetesInventorySync
 
 
 class DefaultExtension(PartnerExtensionModel):
@@ -71,6 +72,13 @@ class DefaultExtension(PartnerExtensionModel):
                 product=plan_product
             )
 
+        if KubernetesInventorySync.is_kubernetes_inventory_sync(extension_type):
+            grafana_resource_id = KubernetesInventorySync.take_grafana_import_settings(configuration_settings)
+            if grafana_resource_id:
+                chart_version = version or KubernetesInventorySync.latest_registered_version(
+                    cmd, resource_group_name, cluster_rp, cluster_type, cluster_name, release_train)
+                KubernetesInventorySync.import_grafana_dashboards(cmd, grafana_resource_id, chart_version)
+
         create_identity = True
         extension = Extension(
             extension_type=extension_type,
@@ -102,6 +110,11 @@ class DefaultExtension(PartnerExtensionModel):
         """Default validations & defaults for Update
         Must create and return a valid 'PatchExtension' object.
         """
+        if KubernetesInventorySync.is_kubernetes_inventory_sync(original_extension.extension_type):
+            grafana_resource_id = KubernetesInventorySync.take_grafana_import_settings(configuration_settings)
+            if grafana_resource_id:
+                chart_version = version or original_extension.version or original_extension.current_version
+                KubernetesInventorySync.import_grafana_dashboards(cmd, grafana_resource_id, chart_version)
 
         return PatchExtension(
             auto_upgrade_minor_version=auto_upgrade_minor_version,
