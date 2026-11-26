@@ -85,7 +85,6 @@ class VirtualNodes(DefaultExtension):
         if configuration_settings is None:
             configuration_settings = {}
         validate_configuration(configuration_settings, configuration_protected_settings, extension_type)
-        check_aks_cluster_workload_identity_config(cluster)
         validate_node_pools(cmd, cluster)
         check_aks_cluster_network_config(cluster)
 
@@ -199,16 +198,6 @@ def check_aks_cluster_network_config(cluster):
                 f"('{cluster.node_resource_group}'), but agent pool '{pool.name}' uses a subnet in resource group "
                 f"'{parsed.get('resource_group')}'. BYO VNETs outside the node resource group are not supported."
             )
-
-
-def check_aks_cluster_workload_identity_config(cluster):
-    security_profile = getattr(cluster, "security_profile", None)
-    workload_identity = getattr(security_profile, "workload_identity", None)
-    if not getattr(workload_identity, "enabled", False):
-        raise InvalidArgumentValueError(
-            "Azure Workload Identity must be enabled on the AKS cluster before installing "
-            "the Microsoft.virtualnodes extension."
-        )
 
 
 def add_and_delegate_aci_subnet(cmd, cluster, resource_group_name):
